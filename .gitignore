@@ -1,0 +1,24 @@
+# Cấu hình máy cá nhân — chứa đường dẫn tuyệt đối và tên người dùng Windows
+.claude/
+
+# File backup do app xuất ra: đây là VĂN BẢN THƯỜNG chứa secret key.
+# Không bao giờ được commit, kể cả khi bạn chỉ định để tạm.
+2fa-backup-*.json
+2fa-backup-*.txt
+*-backup-*.json
+*-backup-*.txt
+export*.json
+export*.txt
+
+# Thư mục backup dự án
+*-backup-*/
+
+# Rác hệ điều hành / trình soạn thảo
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# Vercel
+.vercel/

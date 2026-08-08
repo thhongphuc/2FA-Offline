@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0e1116"/>
+  <path d="M256 84 118 144v112c0 92 58 168 138 188 80-20 138-96 138-188V144L256 84z"
+        fill="none" stroke="#3b82f6" stroke-width="26" stroke-linejoin="round"/>
+  <text x="256" y="300" font-family="ui-monospace, monospace" font-size="112" font-weight="700"
+        fill="#e6eaf0" text-anchor="middle">2FA</text>
+</svg>

@@ -1,0 +1,10 @@
+# Chuẩn hoá xuống dòng: repo luôn lưu LF, tránh diff nhiễu khi làm việc trên
+# nhiều máy Windows/macOS/Linux.
+* text=auto eol=lf
+
+# File nhị phân (nếu sau này thêm ảnh) — không đụng vào
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

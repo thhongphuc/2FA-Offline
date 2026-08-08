@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="referrer" content="no-referrer">
+<!-- connect-src 'none' khiến trang KHÔNG THỂ gửi request đi đâu, ở mức trình duyệt
+     cưỡng chế. Người dùng tự kiểm chứng được bằng DevTools thay vì phải tin lời hứa.
+     Đặt ở <meta> nên chỉ áp cho document, không áp cho sw.js (service worker cần
+     fetch để cache offline). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>2FA Offline — Tạo mã xác thực tại máy</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2 4 5.5v6c0 5 3.4 9.4 8 10.5 4.6-1.1 8-5.5 8-10.5v-6L12 2z"/>
+    </svg>
+    <div>
+      <h1>2FA Offline</h1>
+      <p class="brand-sub">Sinh mã TOTP ngay trên máy bạn</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span class="pill pill-ok" id="netBadge" title="Trang không gửi bất kỳ dữ liệu nào ra ngoài">Không cần mạng</span>
+    <button class="icon-btn" id="btnLock" type="button" title="Khoá ngay" aria-label="Khoá ngay" hidden>🔒</button>
+    <button class="icon-btn" id="btnGuide" type="button" title="Hướng dẫn sử dụng"
+            aria-label="Hướng dẫn sử dụng" aria-expanded="false" aria-controls="guide">?</button>
+    <button class="icon-btn" id="btnTheme" type="button" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện">◐</button>
+    <button class="icon-btn" id="btnSettings" type="button" title="Cài đặt" aria-label="Cài đặt">⚙</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ Hướng dẫn sử dụng ============ -->
+  <section class="card panel guide" id="guide">
+    <div class="panel-head">
+      <h2>Hướng dẫn sử dụng</h2>
+      <button class="link-btn" id="btnGuideClose" type="button">Đóng hướng dẫn</button>
+    </div>
+
+    <ol class="guide-steps">
+      <li><b>Dán tài khoản</b> vào ô bên dưới, mỗi dòng một tài khoản, theo dạng
+        <code>email|password|secret</code>. Dán bao nhiêu dòng cùng lúc cũng được.</li>
+      <li><b>Bấm "Tạo mã"</b> để xem mã ngay, hoặc <b>"Lưu vào danh sách"</b> nếu muốn
+        dùng lại lần sau mà không phải dán lại.</li>
+      <li><b>Bấm vào con số</b> để copy mã. Bấm vào dòng secret hoặc dòng 🔑 để copy
+        secret / mật khẩu.</li>
+      <li><b>Vòng tròn</b> là thời gian còn lại của mã. Mã tự đổi mỗi 30 giây; khi còn
+        dưới 5 giây vòng tròn chuyển vàng, và <b>mã kế tiếp</b> đã hiện sẵn ở góc phải.</li>
+      <li>Trong <b>Cài đặt ⚙</b>: bật <b>mật khẩu chính</b> để mã hoá dữ liệu, chỉnh
+        <b>bù lệch đồng hồ</b> nếu mã luôn bị báo sai, và <b>xuất backup</b> ở mục
+        "Danh sách đã lưu".</li>
+    </ol>
+
+    <h3 class="guide-risk-title">⚠ Rủi ro cần biết trước khi dùng</h3>
+    <ul class="guide-risks">
+      <li><b>Dữ liệu chỉ nằm trên máy bạn.</b> Trang này không có server, không gửi
+        gì đi đâu. Đổi máy, đổi trình duyệt, hoặc mở ở chế độ ẩn danh là danh sách
+        trống — không có đồng bộ, không có khôi phục từ đám mây.</li>
+      <li><b>Xoá cache là mất dữ liệu.</b> Dọn "dữ liệu duyệt web" hay gỡ trình duyệt
+        sẽ xoá luôn danh sách. <b>Hãy xuất backup <code>.json</code> ngay sau khi lưu
+        tài khoản.</b></li>
+      <li><b>Đừng dùng trên máy công cộng hay máy dùng chung.</b> Secret key nằm lại
+        trong trình duyệt của máy đó. Nếu buộc phải dùng, hãy xoá toàn bộ dữ liệu
+        trước khi rời máy.</li>
+      <li><b>Chưa bật mật khẩu chính thì secret là văn bản thường.</b> Bất kỳ ai mở
+        được trình duyệt này, hoặc extension có quyền đọc trang, đều lấy được.</li>
+      <li><b>Đây là trang web, code tải qua mạng mỗi lần mở.</b> Bạn đang tin vào
+        người vận hành trang. Nếu bạn giữ tài khoản có giá trị, hãy tải toàn bộ file
+        về máy rồi mở <code>index.html</code> — lúc đó không còn phụ thuộc ai nữa.</li>
+      <li><b>Tài khoản quan trọng thì đừng dùng công cụ web.</b> Ngân hàng, email
+        chính, ví tiền số — hãy dùng app điện thoại như Aegis, Ente Auth hoặc 2FAS.</li>
+    </ul>
+  </section>
+
+  <!-- ============ Ô nhập nhanh ============ -->
+  <section class="card panel">
+    <div class="panel-head">
+      <h2>Nhập tài khoản</h2>
+      <button class="link-btn" id="btnFormatHelp" type="button">Định dạng hỗ trợ?</button>
+    </div>
+
+    <textarea id="input" spellcheck="false" autocapitalize="off" autocorrect="off"
+      placeholder="email|password|secret&#10;Mỗi dòng một tài khoản. Ví dụ:&#10;abc@icloud.com|MatKhau123|DQSJC355NQ7BMDODVYIOXVJJYX56Z7AM"></textarea>
+
+    <div id="formatHelp" class="help" hidden>
+      <ul>
+        <li><code>email|password|secret</code> — dạng bạn đang dùng (password chứa ký tự <code>|</code> vẫn nhận đúng)</li>
+        <li><code>email|secret</code></li>
+        <li><code>secret</code> — chỉ mỗi Base32 key</li>
+        <li><code>otpauth://totp/...</code> — URI chuẩn, tự đọc digits/period/algorithm</li>
+      </ul>
+    </div>
+
+    <div class="row-actions">
+      <button class="btn btn-primary" id="btnGenerate" type="button">Tạo mã</button>
+      <button class="btn" id="btnSaveAll" type="button">Lưu vào danh sách</button>
+      <button class="btn btn-ghost" id="btnClearInput" type="button">Xoá ô nhập</button>
+    </div>
+
+    <div id="parseErrors" class="errors" hidden></div>
+    <div id="quickList" class="grid"></div>
+  </section>
+
+  <!-- ============ Danh sách đã lưu ============ -->
+  <section class="card panel">
+    <div class="panel-head">
+      <h2>Danh sách đã lưu <span class="count" id="vaultCount">0</span></h2>
+      <div class="panel-tools">
+        <input type="search" id="search" placeholder="Tìm email / nhãn…" autocomplete="off">
+        <button class="btn btn-sm" id="btnExportJson" type="button">Xuất .json</button>
+        <button class="btn btn-sm" id="btnExportTxt" type="button">Xuất .txt</button>
+        <button class="btn btn-sm" id="btnImport" type="button">Nhập file</button>
+        <input type="file" id="fileImport" accept=".json,.txt,.csv,text/plain,application/json" hidden>
+      </div>
+    </div>
+
+    <div id="vaultList" class="grid"></div>
+    <p class="empty" id="vaultEmpty">Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm <b>Lưu vào danh sách</b>.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p id="footSecurity"></p>
+  <p class="crypto-note" id="cryptoNote"></p>
+</footer>
+
+<!-- ============ Màn khoá ============ -->
+<div id="lockScreen" class="lock" hidden>
+  <div class="lock-box">
+    <svg class="lock-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 2 4 5.5v6c0 5 3.4 9.4 8 10.5 4.6-1.1 8-5.5 8-10.5v-6L12 2z"/>
+    </svg>
+    <h2>Danh sách đang khoá</h2>
+    <p class="lock-sub">Nhập mật khẩu chính để giải mã.</p>
+    <form id="lockForm" autocomplete="off">
+      <input type="password" id="lockPw" placeholder="Mật khẩu chính" autocomplete="current-password">
+      <p class="dlg-error" id="lockErr" hidden></p>
+      <button class="btn btn-primary" id="btnUnlock" type="submit">Mở khoá</button>
+    </form>
+    <button class="link-btn" id="btnForgot" type="button">Quên mật khẩu?</button>
+    <button class="link-btn link-danger" id="btnLockWipe" type="button">
+      Xoá toàn bộ dữ liệu và bắt đầu lại
+    </button>
+  </div>
+</div>
+
+<!-- ============ Dialog: sửa tài khoản ============ -->
+<dialog id="editDialog" class="dlg">
+  <form method="dialog" id="editForm">
+    <h3 id="editTitle">Sửa tài khoản</h3>
+    <label>Email / nhãn
+      <input type="text" id="fLabel" autocomplete="off" required>
+    </label>
+    <label>Mật khẩu <span class="muted">(không bắt buộc)</span>
+      <input type="text" id="fPassword" autocomplete="off">
+    </label>
+    <label>Secret key (Base32)
+      <input type="text" id="fSecret" autocomplete="off" spellcheck="false" required>
+    </label>
+    <label>Ghi chú <span class="muted">(không bắt buộc)</span>
+      <input type="text" id="fNote" autocomplete="off">
+    </label>
+    <div class="field-row">
+      <label>Số chữ số
+        <select id="fDigits"><option>6</option><option>7</option><option>8</option></select>
+      </label>
+      <label>Chu kỳ (giây)
+        <input type="number" id="fPeriod" min="10" max="300" step="1">
+      </label>
+      <label>Thuật toán
+        <select id="fAlgorithm">
+          <option value="SHA-1">SHA-1</option>
+          <option value="SHA-256">SHA-256</option>
+          <option value="SHA-512">SHA-512</option>
+        </select>
+      </label>
+    </div>
+    <p class="dlg-error" id="editError" hidden></p>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" value="cancel" type="submit">Huỷ</button>
+      <button class="btn btn-primary" id="btnEditSave" value="save" type="submit">Lưu</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ Dialog: đặt mật khẩu chính ============ -->
+<dialog id="pwDialog" class="dlg">
+  <form id="pwForm" autocomplete="off">
+    <h3 id="pwTitle">Đặt mật khẩu chính</h3>
+    <p class="muted small" id="pwIntro"></p>
+    <label>Mật khẩu mới
+      <input type="password" id="pwNew" autocomplete="new-password">
+    </label>
+    <label>Nhập lại
+      <input type="password" id="pwConfirm" autocomplete="new-password">
+    </label>
+    <p class="warn-box">Không có cách khôi phục. Quên mật khẩu là mất toàn bộ danh sách —
+      hãy xuất backup trước khi bật.</p>
+    <p class="dlg-error" id="pwError" hidden></p>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" type="button" id="btnPwCancel">Huỷ</button>
+      <button class="btn btn-primary" id="btnPwOk" type="submit">Xác nhận</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ Dialog: cài đặt ============ -->
+<dialog id="settingsDialog" class="dlg">
+  <form method="dialog">
+    <h3>Cài đặt</h3>
+
+    <label class="check">
+      <input type="checkbox" id="sReveal"> Hiện secret key trong danh sách
+    </label>
+    <label class="check">
+      <input type="checkbox" id="sShowPw"> Hiện mật khẩu trong danh sách
+    </label>
+
+    <label>Bù lệch đồng hồ (giây)
+      <input type="number" id="sOffset" step="1" value="0">
+    </label>
+    <p class="muted small">Máy offline hay bị lệch giờ. Nếu mã luôn sai, chỉnh số này (+ hoặc −) rồi thử lại.
+      Đồng hồ hiện tại: <span id="clockNow">—</span></p>
+
+    <div class="sec-block">
+      <h4>Mật khẩu chính</h4>
+      <p class="muted small" id="encStatus">—</p>
+      <div class="row-actions">
+        <button class="btn btn-sm" id="btnEncEnable" type="button">Bật mã hoá</button>
+        <button class="btn btn-sm" id="btnEncChange" type="button">Đổi mật khẩu</button>
+        <button class="btn btn-sm btn-danger" id="btnEncDisable" type="button">Tắt mã hoá</button>
+      </div>
+      <label>Tự khoá sau
+        <select id="sAutoLock">
+          <option value="0">Không tự khoá</option>
+          <option value="1">1 phút không dùng</option>
+          <option value="5">5 phút không dùng</option>
+          <option value="15">15 phút không dùng</option>
+          <option value="60">60 phút không dùng</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="danger-zone">
+      <button class="btn btn-danger btn-sm" id="btnWipe" type="button">Xoá toàn bộ dữ liệu</button>
+    </div>
+
+    <div class="dlg-actions">
+      <button class="btn btn-primary" value="close" type="submit">Đóng</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="busy" class="busy" hidden><div class="busy-box"><span class="spinner"></span><span id="busyText">Đang xử lý…</span></div></div>
+
+<script src="js/base32.js"></script>
+<script src="js/sha.js"></script>
+<script src="js/totp.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
