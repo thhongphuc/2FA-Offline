@@ -171,7 +171,8 @@
 
     el.innerHTML =
       '<div class="acct-top">' +
-        '<div class="acct-label">' + esc(acc.label) +
+        '<div class="acct-label" data-act="copy-label" title="Bấm để copy email / nhãn">' +
+          esc(acc.label) +
           (acc.issuer ? '<div class="acct-issuer">' + esc(acc.issuer) + '</div>' : '') +
         '</div>' +
         '<div class="acct-menu">' + actions + '</div>' +
@@ -231,6 +232,7 @@
       if (card.code) copy(card.code, 'mã');
       return;
     }
+    if (act === 'copy-label') { copy(acc.label, 'email'); return; }
     if (act === 'copy-secret') { copy(acc.secret, 'secret'); return; }
     if (act === 'copy-password') { copy(acc.password, 'mật khẩu'); return; }
     if (act === 'save') { saveAccount(acc); return; }
