@@ -36,7 +36,7 @@
     parseErrors: $('parseErrors'),
     search: $('search'),
     toast: $('toast'),
-    guide: $('guide'),
+    guide: $('guideDialog'),
     main: document.querySelector('main'),
     foot: document.querySelector('footer'),
     cryptoNote: $('cryptoNote'),
@@ -988,6 +988,7 @@
     rebuildCards();
     if (els.settingsDialog.open) els.settingsDialog.close();
     if (els.editDialog.open) els.editDialog.close();
+    if (els.guide.open) els.guide.close();
     showLock();
     refreshEncUi();
   }
@@ -1213,7 +1214,8 @@
     $('bulkGroup').value = '';
     hideLock();
     applyTheme();
-    applyGuideState();
+    // Cố ý KHÔNG tự bật hướng dẫn ở đây: vừa xoá sạch xong mà bị modal đập vào
+    // mặt thì khó chịu. Nó sẽ tự hiện ở lần mở trang sau.
     rebuildCards();
     refreshEncUi();
     toast(t('toastWiped'));
@@ -1248,23 +1250,44 @@
 
   /* ---------------- Hướng dẫn sử dụng ---------------- */
 
-  function applyGuideState() {
-    var open = !settings.guideDismissed;
-    els.guide.hidden = !open;
-    $('btnGuide').setAttribute('aria-expanded', String(open));
+  function openGuide() {
+    if (els.guide.open) return;
+    els.guide.classList.remove('closing');
+    els.guide.showModal();
+    els.guide.scrollTop = 0;
+    $('btnGuide').setAttribute('aria-expanded', 'true');
   }
 
-  function toggleGuide(open) {
-    settings.guideDismissed = !open;
-    applyGuideState();
-    persistSettings();
-    if (open) els.guide.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  // <dialog>.close() gỡ phần tử khỏi luồng vẽ ngay lập tức, nên phải để animation
+  // đóng chạy xong rồi mới gọi close(), nếu không sẽ không thấy gì.
+  function closeGuide() {
+    if (!els.guide.open) return;
+    var ms = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
+    els.guide.classList.add('closing');
+    setTimeout(function () {
+      els.guide.classList.remove('closing');
+      if (els.guide.open) els.guide.close();
+    }, ms);
+    $('btnGuide').setAttribute('aria-expanded', 'false');
+
+    // Đã xem một lần thì lần sau không tự bật nữa.
+    if (!settings.guideDismissed) {
+      settings.guideDismissed = true;
+      persistSettings();
+    }
   }
 
   $('btnGuide').addEventListener('click', function () {
-    toggleGuide(els.guide.hidden);
+    if (els.guide.open) closeGuide(); else openGuide();
   });
-  $('btnGuideClose').addEventListener('click', function () { toggleGuide(false); });
+  $('btnGuideClose').addEventListener('click', closeGuide);
+  $('btnGuideDone').addEventListener('click', closeGuide);
+
+  // Phím Esc: chặn hành vi đóng tức thì của <dialog> để animation kịp chạy.
+  els.guide.addEventListener('cancel', function (ev) {
+    ev.preventDefault();
+    closeGuide();
+  });
 
   $('btnFormatHelp').addEventListener('click', function () {
     var help = $('formatHelp');
@@ -1324,7 +1347,9 @@
       refreshEncUi();
     }
 
-    applyGuideState();
+    // Người mới vào được xem hướng dẫn một lần. Vault đang khoá thì để yên —
+    // ưu tiên màn khoá, hướng dẫn sẽ hiện sau khi mở khoá.
+    if (!settings.guideDismissed && !locked) openGuide();
   })();
 
   setInterval(tick, 200);

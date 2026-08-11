@@ -44,32 +44,6 @@
 </header>
 
 <main>
-  <!-- ============ Hướng dẫn sử dụng ============ -->
-  <section class="card panel guide" id="guide">
-    <div class="panel-head">
-      <h2 data-i18n="guideHeading"></h2>
-      <button class="link-btn" id="btnGuideClose" type="button" data-i18n="guideClose"></button>
-    </div>
-
-    <ol class="guide-steps">
-      <li data-i18n-html="guideStep1"></li>
-      <li data-i18n-html="guideStep2"></li>
-      <li data-i18n-html="guideStep3"></li>
-      <li data-i18n-html="guideStep4"></li>
-      <li data-i18n-html="guideStep5"></li>
-    </ol>
-
-    <h3 class="guide-risk-title" data-i18n="guideRiskTitle"></h3>
-    <ul class="guide-risks">
-      <li data-i18n-html="guideRisk1"></li>
-      <li data-i18n-html="guideRisk2"></li>
-      <li data-i18n-html="guideRisk3"></li>
-      <li data-i18n-html="guideRisk4"></li>
-      <li data-i18n-html="guideRisk5"></li>
-      <li data-i18n-html="guideRisk6"></li>
-    </ul>
-  </section>
-
   <!-- ============ Ô nhập nhanh ============ -->
   <section class="card panel">
     <div class="panel-head">
@@ -159,6 +133,39 @@
 
   <p class="credit" data-i18n-html="credit"></p>
 </footer>
+
+<!-- ============ Dialog: hướng dẫn sử dụng ============ -->
+<dialog id="guideDialog" class="dlg modal">
+  <div class="modal-head">
+    <h3 data-i18n="guideHeading"></h3>
+    <button class="modal-close" id="btnGuideClose" type="button"
+            data-i18n-attr="title:btnClose;aria-label:btnClose">✕</button>
+  </div>
+
+  <div class="modal-body">
+    <ol class="guide-steps">
+      <li><span class="step-num">1</span><span data-i18n-html="guideStep1"></span></li>
+      <li><span class="step-num">2</span><span data-i18n-html="guideStep2"></span></li>
+      <li><span class="step-num">3</span><span data-i18n-html="guideStep3"></span></li>
+      <li><span class="step-num">4</span><span data-i18n-html="guideStep4"></span></li>
+      <li><span class="step-num">5</span><span data-i18n-html="guideStep5"></span></li>
+    </ol>
+
+    <h4 class="guide-risk-title" data-i18n="guideRiskTitle"></h4>
+    <ul class="guide-risks">
+      <li data-i18n-html="guideRisk1"></li>
+      <li data-i18n-html="guideRisk2"></li>
+      <li data-i18n-html="guideRisk3"></li>
+      <li data-i18n-html="guideRisk4"></li>
+      <li data-i18n-html="guideRisk5"></li>
+      <li data-i18n-html="guideRisk6"></li>
+    </ul>
+  </div>
+
+  <div class="modal-foot">
+    <button class="btn btn-primary" id="btnGuideDone" type="button" data-i18n="guideClose"></button>
+  </div>
+</dialog>
 
 <!-- ============ Màn khoá ============ -->
 <div id="lockScreen" class="lock" hidden>
