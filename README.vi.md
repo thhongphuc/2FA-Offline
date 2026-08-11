@@ -221,6 +221,22 @@ Xoá sạch bằng nút **Xoá toàn bộ dữ liệu** trong Cài đặt.
   Với định dạng `email|password|secret` đang dùng thì dán tay vẫn nhanh hơn.
 - Đồng bộ giữa nhiều máy (cố ý không làm — sẽ cần server)
 
+## Khối ủng hộ ở chân trang
+
+Chân trang có sẵn một khối ủng hộ, nhưng **chỉ hiện khi tồn tại file
+`icons/donate-qr.png`**. Chưa có file thì khối tự ẩn, không để lộ ảnh vỡ.
+
+Cách thêm: tạo mã QR tại [vietqr.io](https://vietqr.io) hoặc app ngân hàng, lưu thành
+`icons/donate-qr.png` rồi commit. Ảnh được đặt trên nền trắng nên vẫn quét được ở
+giao diện tối.
+
+File này cố ý **không** nằm trong danh sách `ASSETS` của `sw.js`: `cache.addAll()` thất
+bại toàn bộ nếu bất kỳ file nào 404, nên thêm vào sẽ làm hỏng service worker với những
+ai không có ảnh. Cơ chế stale-while-revalidate tự cache nó khi file tồn tại.
+
+Cân nhắc trước khi thêm: trang công khai đồng nghĩa **số tài khoản trong mã QR cũng công
+khai vĩnh viễn** — bot quét được, và có thể bị lợi dụng để dựng trang giả mạo.
+
 ## Giấy phép
 
 [MIT](LICENSE) © Tống Huỳnh Hồng Phúc

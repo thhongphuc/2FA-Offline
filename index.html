@@ -156,6 +156,18 @@
 <footer class="foot">
   <p id="footSecurity"></p>
   <p class="crypto-note" id="cryptoNote"></p>
+
+  <!-- Tự ẩn nếu chưa có icons/donate-qr.png. Trình xử lý gắn bằng JS chứ không
+       dùng onerror inline, vì CSP script-src 'self' chặn inline handler. -->
+  <section class="support" id="support" hidden>
+    <h2>Ủng hộ</h2>
+    <p>Công cụ này miễn phí, không quảng cáo và không thu thập gì. Nếu nó có ích với bạn,
+      bạn có thể mời tôi một ly cà phê.</p>
+    <img id="donateQr" src="icons/donate-qr.png" width="190" height="190"
+         alt="Mã QR chuyển khoản ủng hộ tác giả">
+    <p class="support-note">Quét bằng app ngân hàng của bạn.</p>
+  </section>
+
   <p class="credit">Phát triển bởi <b>Tống Huỳnh Hồng Phúc</b></p>
 </footer>
 

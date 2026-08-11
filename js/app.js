@@ -1310,6 +1310,17 @@
     ? 'Đang dùng Web Crypto của trình duyệt. Trang này không gửi request nào ra ngoài.'
     : 'Web Crypto không khả dụng (thường do mở bằng file://) — đang dùng bản HMAC thuần JS. SHA-1/SHA-256 vẫn chạy đúng; SHA-512 và mã hoá vault cần chạy qua http://localhost.';
 
+  // Khối ủng hộ chỉ hiện khi ảnh QR thực sự tải được. Chưa bỏ file vào repo thì
+  // im lặng bỏ qua, thay vì để lộ một ảnh vỡ trên trang công khai.
+  (function () {
+    var qr = $('donateQr');
+    var box = $('support');
+    if (!qr || !box) return;
+    if (qr.complete && qr.naturalWidth > 0) { box.hidden = false; return; }
+    qr.addEventListener('load', function () { box.hidden = false; });
+    qr.addEventListener('error', function () { box.hidden = true; });
+  })();
+
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
     navigator.serviceWorker.register('sw.js').catch(function () { /* bỏ qua */ });
   }

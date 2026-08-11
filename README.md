@@ -164,6 +164,16 @@ Ente Auth or 2FAS remains the better choice.
 - **Cross-device sync.** Deliberately absent — it would require a server and a completely
   different trust model.
 
+## Optional donation block
+
+The footer contains a donation block that appears **only if `icons/donate-qr.png`
+exists**. Without the file it stays hidden rather than showing a broken image, so forks
+get a clean page by default.
+
+It is deliberately absent from the `ASSETS` list in `sw.js`: `cache.addAll()` rejects
+entirely if any entry 404s, which would break the service worker for anyone without the
+image. Stale-while-revalidate caches it once it exists.
+
 ## License
 
 [MIT](LICENSE) © Tống Huỳnh Hồng Phúc
