@@ -69,6 +69,15 @@ code độc hại chạy ngay trong trang và đọc được mật khẩu lúc 
 
 Trang đã có sẵn mục **Hướng dẫn sử dụng** mở mặc định cho người mới, kèm 6 mục rủi ro.
 
+## Chạy offline
+
+Service worker cache sẵn cả 13 file và dùng stale-while-revalidate, nên bản cập nhật
+vẫn tới được người dùng thay vì bị kẹt mãi ở phiên bản họ tải lần đầu.
+
+Đã kiểm chứng bằng cách **tắt hẳn server** rồi tải lại trang: giao diện vẫn hiện, sinh
+mã TOTP ra đúng kết quả mong đợi, lưu tài khoản được, và bật mã hoá AES-GCM được —
+trong khi không có gì lắng nghe trên cổng đó.
+
 ## Định dạng nhập
 
 Mỗi dòng một tài khoản, dán được nhiều dòng cùng lúc:
@@ -98,6 +107,8 @@ Secret không phân biệt hoa thường, tự bỏ khoảng trắng và dấu `
 - Xuất & nhập backup `.json` hoặc `.txt`
 - Che secret và mật khẩu mặc định, bật hiện trong Cài đặt
 - Bù lệch đồng hồ (`timeOffset`) cho máy offline bị sai giờ
+- **Song ngữ Việt / Anh** — lần đầu vào thì theo ngôn ngữ trình duyệt, đổi được
+  bằng nút trên thanh công cụ, và nhớ lựa chọn cho lần sau
 - Giao diện sáng/tối, chạy tốt trên điện thoại
 - Cài được như app (PWA), dùng offline vĩnh viễn
 
@@ -118,6 +129,28 @@ trong `settings` thì tên nhóm sẽ nằm dạng văn bản thường ngay c�
 
 Nhóm cố ý **không** trở thành trường thứ tư trong `email|password|secret` — quy tắc
 "phần cuối luôn là secret" chính là thứ cho phép mật khẩu chứa ký tự `|`.
+
+## Song ngữ
+
+Toàn bộ chuỗi nằm trong `js/i18n.js` dưới dạng hai từ điển, không tải gì lúc chạy nên
+cam kết offline và `connect-src 'none'` vẫn nguyên vẹn. Chuỗi tĩnh đánh dấu bằng
+`data-i18n` (textContent), `data-i18n-html` (chuỗi có `<b>`/`<code>`) và
+`data-i18n-attr` (placeholder, title, aria-label); chuỗi động đi qua `t()`.
+
+Chuỗi mặc định cố ý **không** ghi vào dữ liệu: tài khoản không có nhãn được lưu là chuỗi
+rỗng, và hiển thị thành "Không tên" / "Untitled" ở tầng render. Nhờ vậy đổi ngôn ngữ thì
+các bản ghi cũ cũng đổi theo.
+
+## Hiệu ứng modal hướng dẫn
+
+Phần hướng dẫn là một `<dialog>` bật vào theo đường cong `cubic-bezier(0.34, 1.56, 0.64, 1)`
+trên nền mờ, các bước hiện lần lượt.
+
+Animation mở đặt trong `@keyframes` gắn vào `.modal[open]` chứ không dùng
+`@starting-style`: dialog chỉ được vẽ khi có `[open]` nên keyframes tự chạy đúng lúc, và
+cách này hoạt động trên mọi trình duyệt hỗ trợ `<dialog>`. Khi đóng phải đợi animation
+chạy xong rồi mới gọi `close()`, vì `close()` gỡ phần tử khỏi luồng vẽ ngay lập tức.
+`prefers-reduced-motion` tắt toàn bộ chuyển động mà không đụng tới chức năng.
 
 ## Mật khẩu chính (mã hoá vault)
 

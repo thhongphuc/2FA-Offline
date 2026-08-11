@@ -78,6 +78,15 @@ A `<meta>` policy only governs the document.
 `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`,
 `Permissions-Policy`, COOP/CORP, and `frame-ancestors 'none'`.
 
+### Offline behaviour
+
+The service worker precaches all 13 assets and uses stale-while-revalidate, so updates
+still reach users instead of being pinned to the first version they ever loaded.
+
+This was verified by shutting the local server down entirely and reloading: the page
+rendered, TOTP generation returned the expected code, saving worked, and enabling
+AES-GCM vault encryption worked — with nothing listening on the port.
+
 ## Input format
 
 One account per line; paste as many lines as you like.
@@ -108,7 +117,31 @@ Secrets are case-insensitive; whitespace and `=` padding are stripped.
 - `.json` and `.txt` export/import
 - Secrets and passwords masked by default
 - Manual clock offset, for offline machines whose time has drifted
+- **Bilingual (English / Tiếng Việt)** — follows the browser language on first
+  visit, switchable from the toolbar, remembered afterwards
 - Light/dark theme, responsive, installable as a PWA
+
+### Localisation
+
+All strings live in `js/i18n.js` as two dictionaries; nothing is fetched at runtime, so
+the offline guarantee and `connect-src 'none'` still hold. Static text is marked up with
+`data-i18n` (textContent), `data-i18n-html` (strings containing `<b>`/`<code>`) and
+`data-i18n-attr` (placeholder, title, aria-label); dynamic strings go through `t()`.
+
+Default labels are deliberately *not* baked into stored data — an account with no label
+is stored as an empty string and rendered as "Untitled"/"Không tên" at display time, so
+switching language re-labels existing records.
+
+### Guide modal
+
+The how-to panel is a `<dialog>` that springs in on a
+`cubic-bezier(0.34, 1.56, 0.64, 1)` curve over a blurred backdrop, with its steps
+staggered in. The entry animation is a `@keyframes` rule bound to `.modal[open]` rather
+than `@starting-style`, because a dialog is only rendered while `[open]` is present — so
+the animation fires at the right moment in every browser that supports `<dialog>`.
+Closing waits for the exit animation before calling `close()`, which otherwise removes
+the element from the rendering tree instantly. `prefers-reduced-motion` disables all of
+it without affecting behaviour.
 
 Groups are derived from the accounts themselves rather than kept in a separate registry,
 so orphaned or out-of-sync groups are impossible. Group colours are derived

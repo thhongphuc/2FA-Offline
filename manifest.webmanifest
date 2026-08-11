@@ -1,7 +1,7 @@
 {
   "name": "2FA Offline",
   "short_name": "2FA",
-  "description": "Sinh mã TOTP hoàn toàn tại máy, không cần internet.",
+  "description": "TOTP codes generated entirely on your device. No server, no network.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
