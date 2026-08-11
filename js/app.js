@@ -13,6 +13,8 @@
   var filter = '';
   // null = xem tất cả; '' = chỉ nhóm "Chưa phân nhóm"; 'X' = nhóm tên X
   var activeGroup = null;
+  var selectMode = false;
+  var selected = Object.create(null);   // id -> true
 
   // Trạng thái mã hoá
   var enc = { enabled: false, kdf: null, iv: null, ciphertext: null };
@@ -167,18 +169,29 @@
     el.className = 'acct';
     el.dataset.id = acc.id;
 
-    var actions = opts.saved
-      ? '<button class="drag-handle" data-act="drag" draggable="true" title="Kéo để đổi thứ tự">⠿</button>' +
+    // Ở chế độ chọn nhiều, ẩn hẳn tay kéo và nút sửa/xoá: cả thẻ trở thành
+    // vùng bấm để chọn, giữ hai công dụng cùng lúc sẽ gây bấm nhầm.
+    var actions;
+    if (!opts.saved) {
+      actions = '<button data-act="save" title="Lưu vào danh sách">＋</button>';
+    } else if (selectMode) {
+      actions = '<span class="acct-check" aria-hidden="true"></span>';
+    } else {
+      actions =
+        '<button class="drag-handle" data-act="drag" draggable="true" title="Kéo để đổi thứ tự">⠿</button>' +
         '<button data-act="edit" title="Sửa">✎</button>' +
-        '<button data-act="delete" title="Xoá">🗑</button>'
-      : '<button data-act="save" title="Lưu vào danh sách">＋</button>';
+        '<button data-act="delete" title="Xoá">🗑</button>';
+    }
 
     el.innerHTML =
       '<div class="acct-top">' +
         '<div class="acct-label" data-act="copy-label" title="Bấm để copy email / nhãn">' +
           esc(acc.label) +
           (acc.issuer ? '<div class="acct-issuer">' + esc(acc.issuer) + '</div>' : '') +
-          (acc.group ? '<div><span class="acct-group">' + esc(acc.group) + '</span></div>' : '') +
+          (acc.group
+            ? '<div><span class="acct-group ' + groupColorClass(acc.group) + '">' +
+                esc(acc.group) + '</span></div>'
+            : '') +
         '</div>' +
         '<div class="acct-menu">' + actions + '</div>' +
       '</div>' +
@@ -222,7 +235,17 @@
       next: null
     };
 
+    if (card.saved && selectMode) {
+      el.classList.add('selectable');
+      if (selected[acc.id]) el.classList.add('selected');
+    }
+
     el.addEventListener('click', function (ev) {
+      // Cả thẻ là vùng bấm để chọn; các thao tác copy tạm ngưng ở chế độ này.
+      if (selectMode && card.saved) {
+        toggleSelect(card);
+        return;
+      }
       var target = ev.target.closest('[data-act]');
       if (!target) return;
       onCardAction(target.getAttribute('data-act'), card);
@@ -245,6 +268,7 @@
     if (act === 'delete') {
       if (!window.confirm('Xoá "' + acc.label + '" khỏi danh sách?')) return;
       accounts = accounts.filter(function (a) { return a.id !== acc.id; });
+      delete selected[acc.id];
       persist();
       rebuildCards();
       toast('Đã xoá');
@@ -350,6 +374,8 @@
     } else {
       els.vaultEmpty.hidden = true;
     }
+
+    refreshBulkBar();
   }
 
   function emptyFilterMessage() {
@@ -384,6 +410,15 @@
     return names.sort(function (a, b) { return a.localeCompare(b, 'vi'); });
   }
 
+  // Màu suy ra tất định từ tên nhóm nên không cần lưu bảng màu ở đâu — vừa
+  // không có trạng thái để lệch, vừa không đẩy tên nhóm ra vùng văn bản thường.
+  function groupColorClass(name) {
+    if (!name) return '';
+    var h = 0;
+    for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return 'g' + (h % 8);
+  }
+
   function countIn(group) {
     var n = 0;
     for (var i = 0; i < accounts.length; i++) {
@@ -394,7 +429,8 @@
 
   function chipHtml(label, count, groupValue, extraClass) {
     var pressed = (activeGroup === groupValue) ? 'true' : 'false';
-    return '<button type="button" class="chip ' + (extraClass || '') + '" aria-pressed="' + pressed +
+    var cls = 'chip ' + (extraClass || '') + ' ' + groupColorClass(groupValue);
+    return '<button type="button" class="' + cls.trim() + '" aria-pressed="' + pressed +
       '" data-group="' + (groupValue === null ? '__all__' : esc(groupValue)) + '">' +
       '<span class="chip-name">' + esc(label) + '</span>' +
       '<span class="chip-count">' + count + '</span></button>';
@@ -427,12 +463,143 @@
       .join('');
   }
 
+  /* ---------------- Chọn nhiều ---------------- */
+
+  function selectedIds() {
+    return accounts.filter(function (a) { return selected[a.id]; }).map(function (a) { return a.id; });
+  }
+
+  function toggleSelect(card) {
+    var id = card.acc.id;
+    if (selected[id]) delete selected[id];
+    else selected[id] = true;
+    card.el.classList.toggle('selected', !!selected[id]);
+    refreshBulkBar();
+  }
+
+  function refreshBulkBar() {
+    $('bulkBar').hidden = !selectMode;
+    $('groupActions').hidden = selectMode || activeGroup === null || activeGroup === '';
+    if (activeGroup) $('gaName').textContent = activeGroup;
+
+    var n = selectedIds().length;
+    $('bulkCount').textContent = n;
+    ['btnBulkAssign', 'btnBulkUngroup', 'btnBulkDelete'].forEach(function (id) {
+      $(id).disabled = n === 0;
+    });
+    $('btnSelectMode').textContent = selectMode ? 'Xong' : 'Chọn';
+  }
+
+  function setSelectMode(on) {
+    selectMode = on;
+    if (!on) selected = Object.create(null);
+    rebuildCards();
+    refreshBulkBar();
+  }
+
+  // Chỉ tác động lên các thẻ ĐANG HIỆN, để bộ lọc luôn là thứ giới hạn phạm vi.
+  function visibleAccounts() {
+    return accounts.filter(matchesFilter);
+  }
+
+  function applyToSelected(fn, verb) {
+    var ids = selectedIds();
+    if (!ids.length) return;
+    var set = {};
+    ids.forEach(function (id) { set[id] = true; });
+    accounts.forEach(function (a) { if (set[a.id]) fn(a); });
+    persist();
+    rebuildCards();
+    refreshBulkBar();
+    toast(verb.replace('{n}', ids.length));
+  }
+
+  $('btnSelectMode').addEventListener('click', function () { setSelectMode(!selectMode); });
+
+  $('btnBulkSelectAll').addEventListener('click', function () {
+    visibleAccounts().forEach(function (a) { selected[a.id] = true; });
+    rebuildCards();
+    refreshBulkBar();
+  });
+
+  $('btnBulkClear').addEventListener('click', function () {
+    selected = Object.create(null);
+    rebuildCards();
+    refreshBulkBar();
+  });
+
+  $('btnBulkAssign').addEventListener('click', function () {
+    var g = $('bulkGroup').value.trim();
+    if (!g) { toast('Nhập tên nhóm trước'); return; }
+    applyToSelected(function (a) { a.group = g; }, 'Đã chuyển {n} tài khoản sang nhóm "' + g + '"');
+    $('bulkGroup').value = '';
+  });
+
+  $('btnBulkUngroup').addEventListener('click', function () {
+    applyToSelected(function (a) { a.group = ''; }, 'Đã bỏ {n} tài khoản khỏi nhóm');
+  });
+
+  $('btnBulkDelete').addEventListener('click', function () {
+    var ids = selectedIds();
+    if (!ids.length) return;
+    if (!window.confirm('Xoá ' + ids.length + ' tài khoản đã chọn? Không thể hoàn tác.')) return;
+    var set = {};
+    ids.forEach(function (id) { set[id] = true; });
+    accounts = accounts.filter(function (a) { return !set[a.id]; });
+    selected = Object.create(null);
+    persist();
+    rebuildCards();
+    refreshBulkBar();
+    toast('Đã xoá ' + ids.length + ' tài khoản');
+  });
+
+  /* ---------------- Đổi tên / xoá nhóm ---------------- */
+
+  // Nhóm suy ra từ dữ liệu nên đổi tên = cập nhật trường group của mọi thành viên.
+  $('btnGroupRename').addEventListener('click', function () {
+    if (!activeGroup) return;
+    var old = activeGroup;
+    var name = window.prompt('Tên mới cho nhóm "' + old + '":', old);
+    if (name === null) return;
+    name = name.trim().slice(0, 40);
+    if (!name) { toast('Tên nhóm không được để trống'); return; }
+    if (name === old) return;
+
+    var merging = groupNames().indexOf(name) !== -1;
+    if (merging && !window.confirm(
+      'Nhóm "' + name + '" đã tồn tại. Gộp "' + old + '" vào nhóm đó?')) return;
+
+    var n = 0;
+    accounts.forEach(function (a) { if (a.group === old) { a.group = name; n++; } });
+    activeGroup = name;
+    persist();
+    rebuildCards();
+    toast((merging ? 'Đã gộp ' : 'Đã đổi tên nhóm, ') + n + ' tài khoản → "' + name + '"');
+  });
+
+  // Xoá nhóm KHÔNG xoá tài khoản — chúng chuyển về "Chưa phân nhóm".
+  $('btnGroupDelete').addEventListener('click', function () {
+    if (!activeGroup) return;
+    var g = activeGroup;
+    var n = countIn(g);
+    if (!window.confirm(
+      'Xoá nhóm "' + g + '"?\n\n' +
+      n + ' tài khoản trong nhóm sẽ KHÔNG bị xoá, chúng chuyển về "Chưa phân nhóm".')) return;
+
+    accounts.forEach(function (a) { if (a.group === g) a.group = ''; });
+    activeGroup = null;
+    persist();
+    rebuildCards();
+    toast('Đã xoá nhóm "' + g + '", ' + n + ' tài khoản về Chưa phân nhóm');
+  });
+
   els.groupBar.addEventListener('click', function (ev) {
     var chip = ev.target.closest('.chip');
     if (!chip) return;
     var raw = chip.getAttribute('data-group');
     activeGroup = (raw === '__all__') ? null : raw;
     applyFilter();
+    refreshBulkBar();
   });
 
   /* ---------------- Kéo thả sắp xếp ---------------- */
@@ -767,7 +934,9 @@
   // element.click() — nên đây là lớp chặn được cả tương tác lập trình.
   var LOCKABLE_IDS = [
     'input', 'saveGroup', 'btnGenerate', 'btnSaveAll', 'btnClearInput', 'btnFormatHelp',
-    'search', 'btnExportJson', 'btnExportTxt', 'btnImport', 'fileImport',
+    'search', 'btnSelectMode', 'btnExportJson', 'btnExportTxt', 'btnImport', 'fileImport',
+    'bulkGroup', 'btnBulkAssign', 'btnBulkUngroup', 'btnBulkSelectAll', 'btnBulkClear',
+    'btnBulkDelete', 'btnGroupRename', 'btnGroupDelete',
     'btnSettings', 'btnGuide', 'btnTheme'
   ];
 
@@ -811,7 +980,10 @@
     filter = '';
     els.search.value = '';
     activeGroup = null;
+    selectMode = false;
+    selected = Object.create(null);
     $('saveGroup').value = '';
+    $('bulkGroup').value = '';
     rebuildCards();
     if (els.settingsDialog.open) els.settingsDialog.close();
     if (els.editDialog.open) els.editDialog.close();
@@ -1009,7 +1181,10 @@
     filter = '';
     els.search.value = '';
     activeGroup = null;
+    selectMode = false;
+    selected = Object.create(null);
     $('saveGroup').value = '';
+    $('bulkGroup').value = '';
     hideLock();
     applyTheme();
     applyGuideState();

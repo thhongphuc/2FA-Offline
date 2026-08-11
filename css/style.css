@@ -395,9 +395,9 @@ input[type="search"] { width: 190px; }
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: .2px;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 13%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--g);
+  background: color-mix(in srgb, var(--g) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--g) 32%, transparent);
   border-radius: 999px;
   padding: 2px 8px;
   max-width: 100%;
@@ -406,6 +406,77 @@ input[type="search"] { width: 190px; }
   white-space: nowrap;
   vertical-align: middle;
 }
+
+/* Màu nhóm suy ra tất định từ tên (hash -> 1 trong 8 lớp). Không lưu bảng màu
+   ở đâu cả: nếu lưu trong settings thì TÊN NHÓM sẽ nằm dạng văn bản thường
+   ngay cả khi vault đã mã hoá — đọc được mà không cần mở khoá. */
+.g0 { --g: #3b82f6; }
+.g1 { --g: #10b981; }
+.g2 { --g: #f59e0b; }
+.g3 { --g: #a855f7; }
+.g4 { --g: #ef4444; }
+.g5 { --g: #06b6d4; }
+.g6 { --g: #ec4899; }
+.g7 { --g: #84cc16; }
+
+.chip.g0, .chip.g1, .chip.g2, .chip.g3,
+.chip.g4, .chip.g5, .chip.g6, .chip.g7 {
+  border-color: color-mix(in srgb, var(--g) 40%, transparent);
+  color: var(--g);
+}
+.chip[class*="g"]:hover { border-color: var(--g); }
+.chip[aria-pressed="true"][class*="g"] {
+  background: var(--g);
+  border-color: var(--g);
+  color: #fff;
+}
+
+/* ---------- Quản lý nhóm ---------- */
+.group-actions, .bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.bulk-bar { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.bulk-bar input { width: 160px; padding: 7px 10px; font-size: 12.5px; }
+.bulk-count b { color: var(--text); font-family: var(--mono); }
+.group-actions b { color: var(--text); }
+
+/* ---------- Chế độ chọn nhiều ---------- */
+.acct.selectable { cursor: pointer; }
+.acct.selectable .code:hover,
+.acct.selectable .acct-label:hover,
+.acct.selectable .secret-line:hover,
+.acct.selectable .pw-line:hover { background: none; color: inherit; }
+
+.acct-check {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  border: 1.5px solid var(--text-mute);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+}
+.acct-check::after {
+  content: "✓";
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  opacity: 0;
+}
+.acct.selected { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.acct.selected .acct-check { background: var(--accent); border-color: var(--accent); }
+.acct.selected .acct-check::after { opacity: 1; }
 
 /* ---------- Kéo thả sắp xếp ---------- */
 .drag-handle {

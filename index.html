@@ -121,6 +121,7 @@
       <h2>Danh sách đã lưu <span class="count" id="vaultCount">0</span></h2>
       <div class="panel-tools">
         <input type="search" id="search" placeholder="Tìm email / nhãn…" autocomplete="off">
+        <button class="btn btn-sm" id="btnSelectMode" type="button">Chọn</button>
         <button class="btn btn-sm" id="btnExportJson" type="button">Xuất .json</button>
         <button class="btn btn-sm" id="btnExportTxt" type="button">Xuất .txt</button>
         <button class="btn btn-sm" id="btnImport" type="button">Nhập file</button>
@@ -129,6 +130,24 @@
     </div>
 
     <div id="groupBar" class="group-bar" hidden></div>
+
+    <div id="groupActions" class="group-actions" hidden>
+      <span>Nhóm <b id="gaName"></b></span>
+      <button class="btn btn-sm" id="btnGroupRename" type="button">Đổi tên nhóm</button>
+      <button class="btn btn-sm btn-danger" id="btnGroupDelete" type="button">Xoá nhóm</button>
+    </div>
+
+    <div id="bulkBar" class="bulk-bar" hidden>
+      <span class="bulk-count">Đã chọn <b id="bulkCount">0</b></span>
+      <input type="text" id="bulkGroup" list="groupList" placeholder="Tên nhóm…"
+             maxlength="40" autocomplete="off">
+      <button class="btn btn-sm btn-primary" id="btnBulkAssign" type="button">Gán vào nhóm</button>
+      <button class="btn btn-sm" id="btnBulkUngroup" type="button">Bỏ khỏi nhóm</button>
+      <button class="btn btn-sm" id="btnBulkSelectAll" type="button">Chọn hết đang hiện</button>
+      <button class="btn btn-sm" id="btnBulkClear" type="button">Bỏ chọn</button>
+      <button class="btn btn-sm btn-danger" id="btnBulkDelete" type="button">Xoá đã chọn</button>
+    </div>
+
     <div id="vaultList" class="grid"></div>
     <p class="empty" id="vaultEmpty">Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm <b>Lưu vào danh sách</b>.</p>
   </section>
