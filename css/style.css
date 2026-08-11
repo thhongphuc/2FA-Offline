@@ -34,6 +34,12 @@
 
 * { box-sizing: border-box; }
 
+/* Quy tắc [hidden] của trình duyệt là UA style, nên BẤT KỲ khai báo display nào
+   ta viết (display:flex trên .acct, display:grid trên .icon-btn…) đều thắng nó và
+   làm thuộc tính hidden mất tác dụng. Đặt một lần ở đây để không phải nhớ thêm
+   .foo[hidden] mỗi lần tạo component mới. */
+[hidden] { display: none !important; }
+
 html, body { margin: 0; padding: 0; }
 
 body {
@@ -180,7 +186,6 @@ input[type="search"] { width: 190px; }
 .link-danger { color: var(--danger); font-size: 12px; }
 
 /* ---------- Hướng dẫn sử dụng ---------- */
-.guide[hidden] { display: none; }
 .guide-steps, .guide-risks { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--text-dim); }
 .guide-steps li, .guide-risks li { margin: 7px 0; line-height: 1.6; }
 .guide-steps b, .guide-risks b { color: var(--text); font-weight: 600; }
@@ -399,8 +404,6 @@ input[type="search"] { width: 190px; }
   place-items: center;
   padding: 24px;
 }
-.lock[hidden] { display: none; }
-
 .lock-box {
   width: min(360px, 100%);
   text-align: center;
@@ -458,7 +461,6 @@ input[disabled]:focus, textarea[disabled]:focus { border-color: var(--border); b
   display: grid;
   place-items: center;
 }
-.busy[hidden] { display: none; }
 .busy-box {
   background: var(--bg-elev);
   border: 1px solid var(--border);
