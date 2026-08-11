@@ -11,6 +11,8 @@
   var cards = [];          // các thẻ đang hiển thị, kể cả kết quả nhanh
   var quickEntries = [];   // kết quả từ ô nhập, chưa lưu
   var filter = '';
+  // null = xem tất cả; '' = chỉ nhóm "Chưa phân nhóm"; 'X' = nhóm tên X
+  var activeGroup = null;
 
   // Trạng thái mã hoá
   var enc = { enabled: false, kdf: null, iv: null, ciphertext: null };
@@ -27,6 +29,8 @@
     vaultList: $('vaultList'),
     vaultEmpty: $('vaultEmpty'),
     vaultCount: $('vaultCount'),
+    groupBar: $('groupBar'),
+    groupList: $('groupList'),
     parseErrors: $('parseErrors'),
     search: $('search'),
     toast: $('toast'),
@@ -174,6 +178,7 @@
         '<div class="acct-label" data-act="copy-label" title="Bấm để copy email / nhãn">' +
           esc(acc.label) +
           (acc.issuer ? '<div class="acct-issuer">' + esc(acc.issuer) + '</div>' : '') +
+          (acc.group ? '<div><span class="acct-group">' + esc(acc.group) + '</span></div>' : '') +
         '</div>' +
         '<div class="acct-menu">' + actions + '</div>' +
       '</div>' +
@@ -320,6 +325,10 @@
   // Lọc bằng cách ẩn/hiện, không dựng lại thẻ — nếu không mã sẽ nháy về "••••••"
   // sau mỗi ký tự gõ vào ô tìm kiếm.
   function applyFilter() {
+    // Nhóm đang xem có thể biến mất sau khi sửa/xoá tài khoản cuối cùng của nó.
+    // Không tự đưa về "Tất cả" thì người dùng kẹt ở màn hình rỗng.
+    if (activeGroup !== null && countIn(activeGroup) === 0) activeGroup = null;
+
     var visible = 0;
     for (var i = 0; i < cards.length; i++) {
       if (!cards[i].saved) continue;
@@ -329,23 +338,102 @@
     }
 
     els.vaultCount.textContent = accounts.length;
+    renderGroupChips();
+
     if (!accounts.length) {
       els.vaultEmpty.hidden = false;
       els.vaultEmpty.textContent =
         'Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm Lưu vào danh sách.';
     } else if (!visible) {
       els.vaultEmpty.hidden = false;
-      els.vaultEmpty.textContent = 'Không có tài khoản nào khớp "' + filter + '".';
+      els.vaultEmpty.textContent = emptyFilterMessage();
     } else {
       els.vaultEmpty.hidden = true;
     }
   }
 
+  function emptyFilterMessage() {
+    var where = activeGroup === null ? ''
+      : (activeGroup === '' ? ' trong mục "Chưa phân nhóm"' : ' trong nhóm "' + activeGroup + '"');
+    if (!filter) return 'Không có tài khoản nào' + where + '.';
+    return 'Không có tài khoản nào khớp "' + filter + '"' + where + '.';
+  }
+
+  // Nhóm và ô tìm kiếm kết hợp theo kiểu AND.
   function matchesFilter(acc) {
+    if (activeGroup !== null && (acc.group || '') !== activeGroup) return false;
     if (!filter) return true;
     var q = filter.toLowerCase();
-    return (acc.label + ' ' + acc.issuer + ' ' + acc.note).toLowerCase().indexOf(q) !== -1;
+    var hay = acc.label + ' ' + acc.issuer + ' ' + acc.note + ' ' + (acc.group || '');
+    return hay.toLowerCase().indexOf(q) !== -1;
   }
+
+  /* ---------------- Nhóm ---------------- */
+
+  // Danh sách nhóm suy ra từ chính các tài khoản, không lưu registry riêng —
+  // nhờ vậy không bao giờ có nhóm mồ côi hay lệch trạng thái.
+  function groupNames() {
+    var seen = {};
+    var names = [];
+    accounts.forEach(function (a) {
+      var g = a.group || '';
+      if (!g || seen[g]) return;
+      seen[g] = true;
+      names.push(g);
+    });
+    return names.sort(function (a, b) { return a.localeCompare(b, 'vi'); });
+  }
+
+  function countIn(group) {
+    var n = 0;
+    for (var i = 0; i < accounts.length; i++) {
+      if ((accounts[i].group || '') === group) n++;
+    }
+    return n;
+  }
+
+  function chipHtml(label, count, groupValue, extraClass) {
+    var pressed = (activeGroup === groupValue) ? 'true' : 'false';
+    return '<button type="button" class="chip ' + (extraClass || '') + '" aria-pressed="' + pressed +
+      '" data-group="' + (groupValue === null ? '__all__' : esc(groupValue)) + '">' +
+      '<span class="chip-name">' + esc(label) + '</span>' +
+      '<span class="chip-count">' + count + '</span></button>';
+  }
+
+  function renderGroupChips() {
+    var names = groupNames();
+    var ungrouped = countIn('');
+
+    // Không có nhóm nào thì giấu cả thanh chip cho gọn.
+    if (!accounts.length || (!names.length && !activeGroup)) {
+      els.groupBar.hidden = true;
+      els.groupBar.innerHTML = '';
+      refreshGroupDatalist(names);
+      return;
+    }
+
+    var html = chipHtml('Tất cả', accounts.length, null);
+    names.forEach(function (g) { html += chipHtml(g, countIn(g), g); });
+    if (ungrouped) html += chipHtml('Chưa phân nhóm', ungrouped, '', 'chip-none');
+
+    els.groupBar.innerHTML = html;
+    els.groupBar.hidden = false;
+    refreshGroupDatalist(names);
+  }
+
+  function refreshGroupDatalist(names) {
+    els.groupList.innerHTML = (names || groupNames())
+      .map(function (g) { return '<option value="' + esc(g) + '"></option>'; })
+      .join('');
+  }
+
+  els.groupBar.addEventListener('click', function (ev) {
+    var chip = ev.target.closest('.chip');
+    if (!chip) return;
+    var raw = chip.getAttribute('data-group');
+    activeGroup = (raw === '__all__') ? null : raw;
+    applyFilter();
+  });
 
   /* ---------------- Kéo thả sắp xếp ---------------- */
 
@@ -354,9 +442,9 @@
   els.vaultList.addEventListener('dragstart', function (ev) {
     var handle = ev.target.closest('.drag-handle');
     if (!handle) { ev.preventDefault(); return; }
-    if (filter) {
+    if (filter || activeGroup !== null) {
       ev.preventDefault();
-      toast('Xoá ô tìm kiếm trước khi sắp xếp lại');
+      toast('Về "Tất cả" và xoá ô tìm kiếm trước khi sắp xếp lại');
       return;
     }
     dragEl = handle.closest('.acct');
@@ -430,11 +518,19 @@
     return result;
   }
 
+  // Nhóm lấy từ ô "Lưu vào nhóm". Cố ý KHÔNG thêm trường thứ tư vào
+  // email|password|secret: quy tắc "phần cuối luôn là secret" chính là thứ cho phép
+  // mật khẩu chứa ký tự '|', thêm |nhóm ở cuối sẽ phá vỡ nó.
+  function pendingGroup() {
+    return $('saveGroup').value.trim();
+  }
+
   function generateFromInput() {
     if (locked) return;
     var result = readInput();
+    var g = pendingGroup();
     quickEntries = result.entries.map(function (e) {
-      return Vault.sanitize(Vault.assign({ id: Vault.newId() }, e));
+      return Vault.sanitize(Vault.assign({ id: Vault.newId(), group: g }, e));
     });
     rebuildCards();
     if (quickEntries.length) toast('Đã tạo mã cho ' + quickEntries.length + ' tài khoản');
@@ -461,11 +557,12 @@
     var existing = {};
     accounts.forEach(function (a) { existing[a.secret] = true; });
 
+    var g = pendingGroup();
     var added = 0, skipped = 0;
     entries.forEach(function (e) {
       if (existing[e.secret]) { skipped++; return; }
       existing[e.secret] = true;
-      accounts.push(Vault.sanitize(Vault.assign({ id: Vault.newId() }, e)));
+      accounts.push(Vault.sanitize(Vault.assign({ id: Vault.newId(), group: g }, e)));
       added++;
     });
 
@@ -473,7 +570,8 @@
     quickEntries = [];
     els.input.value = '';
     rebuildCards();
-    toast('Đã lưu ' + added + ' tài khoản' + (skipped ? ' (bỏ qua ' + skipped + ' trùng)' : ''));
+    toast('Đã lưu ' + added + ' tài khoản' + (g ? ' vào nhóm "' + g + '"' : '') +
+          (skipped ? ' (bỏ qua ' + skipped + ' trùng)' : ''));
   }
 
   /* ---------------- Dialog sửa ---------------- */
@@ -486,6 +584,7 @@
     $('fLabel').value = acc.label;
     $('fPassword').value = acc.password || '';
     $('fSecret').value = acc.secret;
+    $('fGroup').value = acc.group || '';
     $('fNote').value = acc.note || '';
     $('fDigits').value = String(acc.digits || 6);
     $('fPeriod').value = String(acc.period || 30);
@@ -509,6 +608,7 @@
     editing.label = $('fLabel').value.trim() || 'Không tên';
     editing.password = $('fPassword').value;
     editing.secret = secret;
+    editing.group = $('fGroup').value.trim();
     editing.note = $('fNote').value.trim();
     editing.digits = parseInt($('fDigits').value, 10) || 6;
     editing.period = parseInt($('fPeriod').value, 10) || 30;
@@ -666,7 +766,7 @@
   // Trình duyệt KHÔNG dispatch click lên form control đang disabled — kể cả khi gọi
   // element.click() — nên đây là lớp chặn được cả tương tác lập trình.
   var LOCKABLE_IDS = [
-    'input', 'btnGenerate', 'btnSaveAll', 'btnClearInput', 'btnFormatHelp',
+    'input', 'saveGroup', 'btnGenerate', 'btnSaveAll', 'btnClearInput', 'btnFormatHelp',
     'search', 'btnExportJson', 'btnExportTxt', 'btnImport', 'fileImport',
     'btnSettings', 'btnGuide', 'btnTheme'
   ];
@@ -710,6 +810,8 @@
     els.input.value = '';
     filter = '';
     els.search.value = '';
+    activeGroup = null;
+    $('saveGroup').value = '';
     rebuildCards();
     if (els.settingsDialog.open) els.settingsDialog.close();
     if (els.editDialog.open) els.editDialog.close();
@@ -906,6 +1008,8 @@
     els.input.value = '';
     filter = '';
     els.search.value = '';
+    activeGroup = null;
+    $('saveGroup').value = '';
     hideLock();
     applyTheme();
     applyGuideState();

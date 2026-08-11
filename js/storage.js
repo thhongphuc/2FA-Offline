@@ -47,6 +47,7 @@
       secret: String(acc.secret || ''),
       issuer: String(acc.issuer || ''),
       note: String(acc.note || ''),
+      group: String(acc.group || ''),   // rỗng = "Chưa phân nhóm"
       digits: parseInt(acc.digits, 10) || 6,
       period: parseInt(acc.period, 10) || 30,
       algorithm: acc.algorithm || 'SHA-1',

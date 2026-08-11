@@ -103,7 +103,13 @@
       <button class="btn btn-primary" id="btnGenerate" type="button">Tạo mã</button>
       <button class="btn" id="btnSaveAll" type="button">Lưu vào danh sách</button>
       <button class="btn btn-ghost" id="btnClearInput" type="button">Xoá ô nhập</button>
+      <label class="inline-field">Lưu vào nhóm
+        <input type="text" id="saveGroup" list="groupList" autocomplete="off"
+               placeholder="(không nhóm)" maxlength="40">
+      </label>
     </div>
+
+    <datalist id="groupList"></datalist>
 
     <div id="parseErrors" class="errors" hidden></div>
     <div id="quickList" class="grid"></div>
@@ -122,6 +128,7 @@
       </div>
     </div>
 
+    <div id="groupBar" class="group-bar" hidden></div>
     <div id="vaultList" class="grid"></div>
     <p class="empty" id="vaultEmpty">Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm <b>Lưu vào danh sách</b>.</p>
   </section>
@@ -165,6 +172,9 @@
     </label>
     <label>Secret key (Base32)
       <input type="text" id="fSecret" autocomplete="off" spellcheck="false" required>
+    </label>
+    <label>Nhóm <span class="muted">(để trống = chưa phân nhóm)</span>
+      <input type="text" id="fGroup" list="groupList" autocomplete="off" maxlength="40">
     </label>
     <label>Ghi chú <span class="muted">(không bắt buộc)</span>
       <input type="text" id="fNote" autocomplete="off">
