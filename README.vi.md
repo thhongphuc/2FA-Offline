@@ -1,0 +1,226 @@
+# 2FA Offline
+
+*[English](README.md) · **Tiếng Việt***
+
+Sinh mã TOTP (Google Authenticator / Authy compatible) chạy **hoàn toàn tại trình duyệt**.
+Không quảng cáo, không server, không gửi bất kỳ request nào ra ngoài.
+
+## Chạy thế nào
+
+**Cách 1 — mở thẳng file** (nhanh nhất):
+
+Nhấp đúp `index.html`. Chạy được ngay, kể cả khi rút mạng.
+
+**Cách 2 — qua HTTP local** (khuyến nghị): cần thiết nếu muốn cài dạng app (PWA)
+hoặc dùng secret SHA-512.
+
+```bash
+python -m http.server 8791
+```
+
+Rồi mở http://localhost:8791
+
+## Deploy lên Vercel
+
+Repo đã có sẵn [vercel.json](vercel.json). Không cần build step, không cần framework preset
+— chọn **Other / No framework**, để trống Build Command và Output Directory.
+
+```bash
+npx vercel --prod
+```
+
+### Các lớp phòng thủ đã cấu hình
+
+**CSP đặt trong `<meta>` của [index.html](index.html)** — đây là thứ đáng giá nhất:
+
+```
+default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self';
+manifest-src 'self'; worker-src 'self'; connect-src 'none';
+base-uri 'none'; form-action 'none'
+```
+
+`connect-src 'none'` khiến trang **không thể** gửi request đi đâu — trình duyệt cưỡng chế,
+không phải lời hứa. Người dùng tự mở DevTools kiểm chứng được. Đã kiểm thử: `fetch`
+(cả ngoài lẫn same-origin), `XMLHttpRequest`, `WebSocket`, `navigator.sendBeacon`, và
+ảnh tới host ngoài — tất cả đều bị chặn.
+
+CSP nằm ở `<meta>` chứ không ở HTTP header vì service worker **cần** `fetch` để cache
+offline; `<meta>` chỉ áp cho document nên không vô hiệu hoá `sw.js`.
+
+**Header trong `vercel.json`**: HSTS, `X-Content-Type-Options`, `X-Frame-Options: DENY`,
+`Referrer-Policy: no-referrer`, `Permissions-Policy` (tắt camera/mic/vị trí/thanh toán),
+COOP/CORP, cùng `frame-ancestors 'none'` (chỉ thị này bị bỏ qua trong `<meta>` nên phải
+đặt ở header). `sw.js` và `index.html` đặt `must-revalidate` để bản cập nhật tới được
+người dùng.
+
+### Điều bạn phải chấp nhận khi host công khai
+
+Khi bạn host, **bạn trở thành bên được tin cậy**. Mỗi lần người dùng mở trang là trình
+duyệt tải lại JS từ server bạn. Nếu server, tên miền, hay tài khoản Vercel của bạn bị
+chiếm, kẻ tấn công đẩy được bản JS có thêm đoạn lấy cắp secret — người dùng không có
+cách nào nhận ra, giao diện vẫn y hệt. Mã hoá bằng mật khẩu chính không cứu được, vì
+code độc hại chạy ngay trong trang và đọc được mật khẩu lúc người dùng gõ.
+
+Đây là hạn chế cố hữu của mọi công cụ crypto giao qua web. Giảm thiểu bằng cách:
+
+- Công khai mã nguồn để người biết việc đối chiếu được
+- Khuyến khích tải về chạy local (đã ghi trong phần rủi ro ngay trên trang)
+- Bật 2FA cho chính tài khoản Vercel và tài khoản tên miền của bạn
+
+Trang đã có sẵn mục **Hướng dẫn sử dụng** mở mặc định cho người mới, kèm 6 mục rủi ro.
+
+## Định dạng nhập
+
+Mỗi dòng một tài khoản, dán được nhiều dòng cùng lúc:
+
+| Dạng | Ví dụ |
+|---|---|
+| `email\|password\|secret` | `abc@icloud.com\|Mk#123\|JBSWY3DPEHPK3PXP` |
+| `email\|secret` | `abc@icloud.com\|JBSWY3DPEHPK3PXP` |
+| `secret` | `JBSWY3DPEHPK3PXP` |
+| otpauth URI | `otpauth://totp/GitHub:abc?secret=...&digits=8&period=60` |
+
+Quy tắc tách: **phần đầu là email/nhãn, phần cuối là secret**, mọi thứ ở giữa là
+mật khẩu. Nhờ vậy mật khẩu chứa ký tự `|` vẫn được giữ nguyên vẹn.
+
+Secret không phân biệt hoa thường, tự bỏ khoảng trắng và dấu `=` đệm.
+
+## Tính năng
+
+- Sinh mã cho nhiều tài khoản cùng lúc, vòng đếm ngược theo từng chu kỳ
+- Hiện sẵn **mã kế tiếp** — khỏi phải chờ khi còn 2 giây
+- Lưu danh sách vào trình duyệt, tìm kiếm, sửa, xoá, **kéo thả đổi thứ tự**
+- **Nhóm**: gán nhóm khi dán hàng loạt, thanh chip lọc kèm số đếm, chọn nhiều để
+  gán lại / xoá hàng loạt, đổi tên và xoá nhóm
+- Sửa được `digits` (6/7/8), `period`, thuật toán (SHA-1/256/512)
+- **Mã hoá bằng mật khẩu chính** (AES-256-GCM), khoá màn hình, tự khoá khi không dùng
+- Bấm để copy mã / email / secret / mật khẩu
+- Xuất & nhập backup `.json` hoặc `.txt`
+- Che secret và mật khẩu mặc định, bật hiện trong Cài đặt
+- Bù lệch đồng hồ (`timeOffset`) cho máy offline bị sai giờ
+- Giao diện sáng/tối, chạy tốt trên điện thoại
+- Cài được như app (PWA), dùng offline vĩnh viễn
+
+## Nhóm
+
+Danh sách nhóm **suy ra từ chính các tài khoản**, không lưu registry riêng — nhờ vậy
+không bao giờ có nhóm mồ côi hay lệch trạng thái. Đổi tên nhóm nghĩa là cập nhật trường
+`group` của mọi thành viên. Xoá nhóm **không** xoá tài khoản: chúng chuyển về
+"Chưa phân nhóm".
+
+Thanh chip lọc kết hợp **AND** với ô tìm kiếm. Trong chế độ chọn nhiều, nút
+"Chọn hết đang hiện" chỉ lấy các thẻ **đang hiển thị**, nên bộ lọc luôn là thứ giới hạn
+phạm vi thao tác.
+
+Màu nhóm suy ra tất định từ tên nhóm bằng hash. Cố ý **không lưu bảng màu**: nếu lưu
+trong `settings` thì tên nhóm sẽ nằm dạng văn bản thường ngay cả khi vault đã mã hoá,
+đọc được mà không cần mở khoá.
+
+Nhóm cố ý **không** trở thành trường thứ tư trong `email|password|secret` — quy tắc
+"phần cuối luôn là secret" chính là thứ cho phép mật khẩu chứa ký tự `|`.
+
+## Mật khẩu chính (mã hoá vault)
+
+Mặc định **tắt**. Bật trong **Cài đặt → Mật khẩu chính → Bật mã hoá**.
+
+Khi bật:
+
+- Toàn bộ tài khoản được mã hoá **AES-256-GCM** trước khi ghi xuống `localStorage`
+- Khoá dẫn xuất bằng **PBKDF2-HMAC-SHA256, 600.000 vòng** (mức OWASP khuyến nghị),
+  salt ngẫu nhiên 16 byte, IV 12 byte mới cho **mỗi** lần ghi
+- Khoá chỉ nằm trong RAM, không bao giờ ghi xuống đĩa
+- Mở trang lên là gặp màn khoá; nhập sai mật khẩu thì AES-GCM tự từ chối
+  (không cần lưu hash mật khẩu ở đâu cả)
+- Tự khoá sau 1 / 5 / 15 / 60 phút không dùng — khi khoá, toàn bộ tài khoản
+  bị xoá khỏi bộ nhớ và khỏi DOM
+- Lúc khoá, giao diện phía sau bị **vô hiệu hoá thật** chứ không chỉ bị che: mọi
+  control đặt `disabled`, `<main>`/`<footer>` đặt `inert`, và các hàm xử lý đều có
+  guard riêng. Ba lớp độc lập nhau nên hỏng một lớp vẫn còn hai lớp
+- `settings` (theme, bù giờ) vẫn để dạng thường để áp được giao diện trước khi mở khoá
+
+### Mật khẩu này ở đâu ra?
+
+**Bạn tự đặt.** App không có mật khẩu mặc định và **không có màn đăng nhập**. Mở trang
+lên là dùng được ngay. Mật khẩu chính chỉ xuất hiện sau khi chính bạn bật nó trong
+Cài đặt, và bạn tự nghĩ ra chuỗi đó (tối thiểu 8 ký tự). Nó không liên quan gì tới
+mật khẩu của các tài khoản bạn lưu trong danh sách.
+
+### Quên mật khẩu thì sao?
+
+**Không khôi phục được, và đó là chủ đích của thiết kế.** Khoá AES được dẫn xuất
+trực tiếp từ chuỗi bạn gõ qua PBKDF2 và không lưu ở bất kỳ đâu — không trên máy bạn,
+không ở server nào. Không tồn tại "quên mật khẩu → gửi email đặt lại", vì không có
+email, không có server, và không có bản sao khoá. Người làm ra trang này cũng không
+mở hộ được.
+
+Nếu quên:
+
+- **Có file backup `.json`/`.txt`** — bấm **"Xoá toàn bộ dữ liệu và bắt đầu lại"** ngay
+  trên màn khoá, rồi dùng **Nhập file** để khôi phục. Backup là văn bản thường nên
+  không dính mật khẩu chính.
+- **Không có backup** — secret key mất vĩnh viễn. Bạn phải vào từng dịch vụ, đăng nhập
+  bằng mã dự phòng (backup code) hoặc email, rồi thiết lập lại 2FA để lấy secret mới.
+
+Vì vậy: **xuất backup `.json` ngay sau khi lưu tài khoản, trước khi bật mã hoá.**
+
+Tính năng này cần Web Crypto, nên phải chạy qua `http://localhost` nếu trình duyệt
+của bạn không cấp `crypto.subtle` cho `file://`.
+
+## Cấu trúc
+
+```
+index.html               UI
+css/style.css
+js/base32.js             giải mã Base32 (RFC 4648)
+js/sha.js                SHA-1 / SHA-256 + HMAC thuần JS (đường dự phòng)
+js/totp.js               TOTP (RFC 6238), ưu tiên Web Crypto
+js/parser.js             đọc email|password|secret và otpauth://
+js/crypto.js             AES-GCM + PBKDF2 cho vault
+js/storage.js            đọc/ghi localStorage
+js/app.js                render, đồng hồ, copy, nhóm, import/export
+sw.js                    service worker (stale-while-revalidate)
+```
+
+Không có dependency, không có bước build, không tải gì từ CDN.
+
+### Về Web Crypto
+
+Mặc định dùng `crypto.subtle` của trình duyệt. Khi mở bằng `file://` mà trình duyệt
+không cho phép `crypto.subtle`, app tự chuyển sang bản HMAC viết bằng JS thuần —
+SHA-1 và SHA-256 vẫn cho kết quả đúng y hệt. Riêng SHA-512 bắt buộc phải chạy qua
+`http://localhost`. Dòng chữ dưới chân trang cho biết đang chạy đường nào.
+
+Cả hai đường đã được đối chiếu với **toàn bộ test vector của RFC 6238** (SHA-1,
+SHA-256, SHA-512) và với `crypto` của Node.
+
+## Lưu ý bảo mật
+
+**Khi chưa bật mật khẩu chính**, secret key nằm dạng văn bản thường trong
+`localStorage`. Nghĩa là ai dùng chung máy / chung profile trình duyệt đều đọc được,
+và extension có quyền truy cập trang cũng đọc được.
+
+**Kể cả khi đã bật mật khẩu chính**, vẫn còn những giới hạn cần biết:
+
+- Lúc vault đang mở, secret nằm trong RAM và trong DOM — chỉ được xoá khi khoá lại
+- File backup `.json` / `.txt` xuất ra luôn là văn bản thường
+- Mã hoá bảo vệ dữ liệu *lúc nằm yên trên đĩa*, không chống được keylogger
+  hay extension độc hại đang chạy cùng lúc
+
+Đây là đánh đổi cố hữu của mọi công cụ 2FA dạng web. Với tài khoản quan trọng —
+ngân hàng, email chính — hãy dùng app điện thoại như Aegis, Ente Auth hay 2FAS.
+
+Xoá sạch bằng nút **Xoá toàn bộ dữ liệu** trong Cài đặt.
+
+## Chưa làm
+
+- **Quét mã QR** — đã cân nhắc rồi bỏ. `BarcodeDetector` (bộ đọc QR có sẵn của
+  trình duyệt) không tồn tại trên Chrome/Edge bản Windows, nên tính năng sẽ vô
+  dụng đúng trên nền tảng đang dùng. Các lựa chọn còn lại là nhúng thư viện QR
+  vào repo (phá vỡ cam kết zero-dependency) hoặc tự viết bộ giải mã QR
+  (~800 dòng: dò finder pattern, biến đổi phối cảnh, Reed-Solomon trên GF(256)).
+  Với định dạng `email|password|secret` đang dùng thì dán tay vẫn nhanh hơn.
+- Đồng bộ giữa nhiều máy (cố ý không làm — sẽ cần server)
+
+## Giấy phép
+
+[MIT](LICENSE) © Tống Huỳnh Hồng Phúc
