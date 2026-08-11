@@ -24,16 +24,22 @@
     </svg>
     <div>
       <h1>2FA Offline</h1>
-      <p class="brand-sub">Sinh mã TOTP ngay trên máy bạn</p>
+      <p class="brand-sub" data-i18n="brandSub"></p>
     </div>
   </div>
   <div class="topbar-actions">
-    <span class="pill pill-ok" id="netBadge" title="Trang không gửi bất kỳ dữ liệu nào ra ngoài">Không cần mạng</span>
-    <button class="icon-btn" id="btnLock" type="button" title="Khoá ngay" aria-label="Khoá ngay" hidden>🔒</button>
-    <button class="icon-btn" id="btnGuide" type="button" title="Hướng dẫn sử dụng"
-            aria-label="Hướng dẫn sử dụng" aria-expanded="false" aria-controls="guide">?</button>
-    <button class="icon-btn" id="btnTheme" type="button" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện">◐</button>
-    <button class="icon-btn" id="btnSettings" type="button" title="Cài đặt" aria-label="Cài đặt">⚙</button>
+    <span class="pill pill-ok" id="netBadge" data-i18n="netBadge"
+          data-i18n-attr="title:netBadgeTitle"></span>
+    <button class="icon-btn" id="btnLock" type="button"
+            data-i18n-attr="title:lockNow;aria-label:lockNow" hidden>🔒</button>
+    <button class="icon-btn" id="btnGuide" type="button" aria-expanded="false" aria-controls="guide"
+            data-i18n-attr="title:guideBtn;aria-label:guideBtn">?</button>
+    <button class="icon-btn" id="btnTheme" type="button"
+            data-i18n-attr="title:themeBtn;aria-label:themeBtn">◐</button>
+    <button class="icon-btn" id="btnSettings" type="button"
+            data-i18n-attr="title:settingsBtn;aria-label:settingsBtn">⚙</button>
+    <button class="icon-btn icon-btn-text" id="btnLang" type="button"
+            data-i18n="langSwitchLabel" data-i18n-attr="title:langSwitchTitle;aria-label:langSwitchTitle"></button>
   </div>
 </header>
 
@@ -41,71 +47,55 @@
   <!-- ============ Hướng dẫn sử dụng ============ -->
   <section class="card panel guide" id="guide">
     <div class="panel-head">
-      <h2>Hướng dẫn sử dụng</h2>
-      <button class="link-btn" id="btnGuideClose" type="button">Đóng hướng dẫn</button>
+      <h2 data-i18n="guideHeading"></h2>
+      <button class="link-btn" id="btnGuideClose" type="button" data-i18n="guideClose"></button>
     </div>
 
     <ol class="guide-steps">
-      <li><b>Dán tài khoản</b> vào ô bên dưới, mỗi dòng một tài khoản, theo dạng
-        <code>email|password|secret</code>. Dán bao nhiêu dòng cùng lúc cũng được.</li>
-      <li><b>Bấm "Tạo mã"</b> để xem mã ngay, hoặc <b>"Lưu vào danh sách"</b> nếu muốn
-        dùng lại lần sau mà không phải dán lại.</li>
-      <li><b>Bấm vào con số</b> để copy mã. Bấm vào dòng secret hoặc dòng 🔑 để copy
-        secret / mật khẩu.</li>
-      <li><b>Vòng tròn</b> là thời gian còn lại của mã. Mã tự đổi mỗi 30 giây; khi còn
-        dưới 5 giây vòng tròn chuyển vàng, và <b>mã kế tiếp</b> đã hiện sẵn ở góc phải.</li>
-      <li>Trong <b>Cài đặt ⚙</b>: bật <b>mật khẩu chính</b> để mã hoá dữ liệu, chỉnh
-        <b>bù lệch đồng hồ</b> nếu mã luôn bị báo sai, và <b>xuất backup</b> ở mục
-        "Danh sách đã lưu".</li>
+      <li data-i18n-html="guideStep1"></li>
+      <li data-i18n-html="guideStep2"></li>
+      <li data-i18n-html="guideStep3"></li>
+      <li data-i18n-html="guideStep4"></li>
+      <li data-i18n-html="guideStep5"></li>
     </ol>
 
-    <h3 class="guide-risk-title">⚠ Rủi ro cần biết trước khi dùng</h3>
+    <h3 class="guide-risk-title" data-i18n="guideRiskTitle"></h3>
     <ul class="guide-risks">
-      <li><b>Dữ liệu chỉ nằm trên máy bạn.</b> Trang này không có server, không gửi
-        gì đi đâu. Đổi máy, đổi trình duyệt, hoặc mở ở chế độ ẩn danh là danh sách
-        trống — không có đồng bộ, không có khôi phục từ đám mây.</li>
-      <li><b>Xoá cache là mất dữ liệu.</b> Dọn "dữ liệu duyệt web" hay gỡ trình duyệt
-        sẽ xoá luôn danh sách. <b>Hãy xuất backup <code>.json</code> ngay sau khi lưu
-        tài khoản.</b></li>
-      <li><b>Đừng dùng trên máy công cộng hay máy dùng chung.</b> Secret key nằm lại
-        trong trình duyệt của máy đó. Nếu buộc phải dùng, hãy xoá toàn bộ dữ liệu
-        trước khi rời máy.</li>
-      <li><b>Chưa bật mật khẩu chính thì secret là văn bản thường.</b> Bất kỳ ai mở
-        được trình duyệt này, hoặc extension có quyền đọc trang, đều lấy được.</li>
-      <li><b>Đây là trang web, code tải qua mạng mỗi lần mở.</b> Bạn đang tin vào
-        người vận hành trang. Nếu bạn giữ tài khoản có giá trị, hãy tải toàn bộ file
-        về máy rồi mở <code>index.html</code> — lúc đó không còn phụ thuộc ai nữa.</li>
-      <li><b>Tài khoản quan trọng thì đừng dùng công cụ web.</b> Ngân hàng, email
-        chính, ví tiền số — hãy dùng app điện thoại như Aegis, Ente Auth hoặc 2FAS.</li>
+      <li data-i18n-html="guideRisk1"></li>
+      <li data-i18n-html="guideRisk2"></li>
+      <li data-i18n-html="guideRisk3"></li>
+      <li data-i18n-html="guideRisk4"></li>
+      <li data-i18n-html="guideRisk5"></li>
+      <li data-i18n-html="guideRisk6"></li>
     </ul>
   </section>
 
   <!-- ============ Ô nhập nhanh ============ -->
   <section class="card panel">
     <div class="panel-head">
-      <h2>Nhập tài khoản</h2>
-      <button class="link-btn" id="btnFormatHelp" type="button">Định dạng hỗ trợ?</button>
+      <h2 data-i18n="inputHeading"></h2>
+      <button class="link-btn" id="btnFormatHelp" type="button" data-i18n="formatHelpBtn"></button>
     </div>
 
     <textarea id="input" spellcheck="false" autocapitalize="off" autocorrect="off"
-      placeholder="email|password|secret&#10;Mỗi dòng một tài khoản. Ví dụ:&#10;abc@icloud.com|MatKhau123|DQSJC355NQ7BMDODVYIOXVJJYX56Z7AM"></textarea>
+      data-i18n-attr="placeholder:inputPlaceholder"></textarea>
 
     <div id="formatHelp" class="help" hidden>
       <ul>
-        <li><code>email|password|secret</code> — dạng bạn đang dùng (password chứa ký tự <code>|</code> vẫn nhận đúng)</li>
-        <li><code>email|secret</code></li>
-        <li><code>secret</code> — chỉ mỗi Base32 key</li>
-        <li><code>otpauth://totp/...</code> — URI chuẩn, tự đọc digits/period/algorithm</li>
+        <li data-i18n-html="fmt1"></li>
+        <li data-i18n-html="fmt2"></li>
+        <li data-i18n-html="fmt3"></li>
+        <li data-i18n-html="fmt4"></li>
       </ul>
     </div>
 
     <div class="row-actions">
-      <button class="btn btn-primary" id="btnGenerate" type="button">Tạo mã</button>
-      <button class="btn" id="btnSaveAll" type="button">Lưu vào danh sách</button>
-      <button class="btn btn-ghost" id="btnClearInput" type="button">Xoá ô nhập</button>
-      <label class="inline-field">Lưu vào nhóm
-        <input type="text" id="saveGroup" list="groupList" autocomplete="off"
-               placeholder="(không nhóm)" maxlength="40">
+      <button class="btn btn-primary" id="btnGenerate" type="button" data-i18n="btnGenerate"></button>
+      <button class="btn" id="btnSaveAll" type="button" data-i18n="btnSaveAll"></button>
+      <button class="btn btn-ghost" id="btnClearInput" type="button" data-i18n="btnClearInput"></button>
+      <label class="inline-field"><span data-i18n="saveGroupLabel"></span>
+        <input type="text" id="saveGroup" list="groupList" autocomplete="off" maxlength="40"
+               data-i18n-attr="placeholder:saveGroupPlaceholder">
       </label>
     </div>
 
@@ -118,13 +108,14 @@
   <!-- ============ Danh sách đã lưu ============ -->
   <section class="card panel">
     <div class="panel-head">
-      <h2>Danh sách đã lưu <span class="count" id="vaultCount">0</span></h2>
+      <h2><span data-i18n="vaultHeading"></span> <span class="count" id="vaultCount">0</span></h2>
       <div class="panel-tools">
-        <input type="search" id="search" placeholder="Tìm email / nhãn…" autocomplete="off">
-        <button class="btn btn-sm" id="btnSelectMode" type="button">Chọn</button>
-        <button class="btn btn-sm" id="btnExportJson" type="button">Xuất .json</button>
-        <button class="btn btn-sm" id="btnExportTxt" type="button">Xuất .txt</button>
-        <button class="btn btn-sm" id="btnImport" type="button">Nhập file</button>
+        <input type="search" id="search" autocomplete="off"
+               data-i18n-attr="placeholder:searchPlaceholder">
+        <button class="btn btn-sm" id="btnSelectMode" type="button"></button>
+        <button class="btn btn-sm" id="btnExportJson" type="button" data-i18n="btnExportJson"></button>
+        <button class="btn btn-sm" id="btnExportTxt" type="button" data-i18n="btnExportTxt"></button>
+        <button class="btn btn-sm" id="btnImport" type="button" data-i18n="btnImport"></button>
         <input type="file" id="fileImport" accept=".json,.txt,.csv,text/plain,application/json" hidden>
       </div>
     </div>
@@ -132,24 +123,24 @@
     <div id="groupBar" class="group-bar" hidden></div>
 
     <div id="groupActions" class="group-actions" hidden>
-      <span>Nhóm <b id="gaName"></b></span>
-      <button class="btn btn-sm" id="btnGroupRename" type="button">Đổi tên nhóm</button>
-      <button class="btn btn-sm btn-danger" id="btnGroupDelete" type="button">Xoá nhóm</button>
+      <span><span data-i18n="groupWord"></span> <b id="gaName"></b></span>
+      <button class="btn btn-sm" id="btnGroupRename" type="button" data-i18n="btnGroupRename"></button>
+      <button class="btn btn-sm btn-danger" id="btnGroupDelete" type="button" data-i18n="btnGroupDelete"></button>
     </div>
 
     <div id="bulkBar" class="bulk-bar" hidden>
-      <span class="bulk-count">Đã chọn <b id="bulkCount">0</b></span>
-      <input type="text" id="bulkGroup" list="groupList" placeholder="Tên nhóm…"
-             maxlength="40" autocomplete="off">
-      <button class="btn btn-sm btn-primary" id="btnBulkAssign" type="button">Gán vào nhóm</button>
-      <button class="btn btn-sm" id="btnBulkUngroup" type="button">Bỏ khỏi nhóm</button>
-      <button class="btn btn-sm" id="btnBulkSelectAll" type="button">Chọn hết đang hiện</button>
-      <button class="btn btn-sm" id="btnBulkClear" type="button">Bỏ chọn</button>
-      <button class="btn btn-sm btn-danger" id="btnBulkDelete" type="button">Xoá đã chọn</button>
+      <span class="bulk-count"><span data-i18n="bulkSelected"></span> <b id="bulkCount">0</b></span>
+      <input type="text" id="bulkGroup" list="groupList" maxlength="40" autocomplete="off"
+             data-i18n-attr="placeholder:bulkGroupPlaceholder">
+      <button class="btn btn-sm btn-primary" id="btnBulkAssign" type="button" data-i18n="btnBulkAssign"></button>
+      <button class="btn btn-sm" id="btnBulkUngroup" type="button" data-i18n="btnBulkUngroup"></button>
+      <button class="btn btn-sm" id="btnBulkSelectAll" type="button" data-i18n="btnBulkSelectAll"></button>
+      <button class="btn btn-sm" id="btnBulkClear" type="button" data-i18n="btnBulkClear"></button>
+      <button class="btn btn-sm btn-danger" id="btnBulkDelete" type="button" data-i18n="btnBulkDelete"></button>
     </div>
 
     <div id="vaultList" class="grid"></div>
-    <p class="empty" id="vaultEmpty">Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm <b>Lưu vào danh sách</b>.</p>
+    <p class="empty" id="vaultEmpty"></p>
   </section>
 </main>
 
@@ -160,15 +151,13 @@
   <!-- Tự ẩn nếu chưa có icons/donate-qr.png. Trình xử lý gắn bằng JS chứ không
        dùng onerror inline, vì CSP script-src 'self' chặn inline handler. -->
   <section class="support" id="support" hidden>
-    <h2>Ủng hộ</h2>
-    <p>Công cụ này miễn phí, không quảng cáo và không thu thập gì. Nếu nó có ích với bạn,
-      bạn có thể mời tôi một ly cà phê.</p>
-    <img id="donateQr" src="icons/donate-qr.png" width="190" height="190"
-         alt="Mã QR chuyển khoản ủng hộ tác giả">
-    <p class="support-note">Quét bằng app ngân hàng của bạn.</p>
+    <h2 data-i18n="supportHeading"></h2>
+    <p data-i18n="supportText"></p>
+    <img id="donateQr" src="icons/donate-qr.png" data-i18n-attr="alt:qrAlt">
+    <p class="support-note" data-i18n="supportNote"></p>
   </section>
 
-  <p class="credit">Phát triển bởi <b>Tống Huỳnh Hồng Phúc</b></p>
+  <p class="credit" data-i18n-html="credit"></p>
 </footer>
 
 <!-- ============ Màn khoá ============ -->
@@ -177,47 +166,46 @@
     <svg class="lock-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 2 4 5.5v6c0 5 3.4 9.4 8 10.5 4.6-1.1 8-5.5 8-10.5v-6L12 2z"/>
     </svg>
-    <h2>Danh sách đang khoá</h2>
-    <p class="lock-sub">Nhập mật khẩu chính để giải mã.</p>
+    <h2 data-i18n="lockHeading"></h2>
+    <p class="lock-sub" data-i18n="lockSub"></p>
     <form id="lockForm" autocomplete="off">
-      <input type="password" id="lockPw" placeholder="Mật khẩu chính" autocomplete="current-password">
+      <input type="password" id="lockPw" autocomplete="current-password"
+             data-i18n-attr="placeholder:lockPwPlaceholder">
       <p class="dlg-error" id="lockErr" hidden></p>
-      <button class="btn btn-primary" id="btnUnlock" type="submit">Mở khoá</button>
+      <button class="btn btn-primary" id="btnUnlock" type="submit" data-i18n="btnUnlock"></button>
     </form>
-    <button class="link-btn" id="btnForgot" type="button">Quên mật khẩu?</button>
-    <button class="link-btn link-danger" id="btnLockWipe" type="button">
-      Xoá toàn bộ dữ liệu và bắt đầu lại
-    </button>
+    <button class="link-btn" id="btnForgot" type="button" data-i18n="btnForgot"></button>
+    <button class="link-btn link-danger" id="btnLockWipe" type="button" data-i18n="btnLockWipe"></button>
   </div>
 </div>
 
 <!-- ============ Dialog: sửa tài khoản ============ -->
 <dialog id="editDialog" class="dlg">
   <form method="dialog" id="editForm">
-    <h3 id="editTitle">Sửa tài khoản</h3>
-    <label>Email / nhãn
+    <h3 id="editTitle" data-i18n="editTitle"></h3>
+    <label><span data-i18n="fLabel"></span>
       <input type="text" id="fLabel" autocomplete="off" required>
     </label>
-    <label>Mật khẩu <span class="muted">(không bắt buộc)</span>
+    <label><span data-i18n="fPassword"></span> <span class="muted" data-i18n="optional"></span>
       <input type="text" id="fPassword" autocomplete="off">
     </label>
-    <label>Secret key (Base32)
+    <label><span data-i18n="fSecret"></span>
       <input type="text" id="fSecret" autocomplete="off" spellcheck="false" required>
     </label>
-    <label>Nhóm <span class="muted">(để trống = chưa phân nhóm)</span>
+    <label><span data-i18n="fGroup"></span> <span class="muted" data-i18n="groupHint"></span>
       <input type="text" id="fGroup" list="groupList" autocomplete="off" maxlength="40">
     </label>
-    <label>Ghi chú <span class="muted">(không bắt buộc)</span>
+    <label><span data-i18n="fNote"></span> <span class="muted" data-i18n="optional"></span>
       <input type="text" id="fNote" autocomplete="off">
     </label>
     <div class="field-row">
-      <label>Số chữ số
+      <label><span data-i18n="fDigits"></span>
         <select id="fDigits"><option>6</option><option>7</option><option>8</option></select>
       </label>
-      <label>Chu kỳ (giây)
+      <label><span data-i18n="fPeriod"></span>
         <input type="number" id="fPeriod" min="10" max="300" step="1">
       </label>
-      <label>Thuật toán
+      <label><span data-i18n="fAlgorithm"></span>
         <select id="fAlgorithm">
           <option value="SHA-1">SHA-1</option>
           <option value="SHA-256">SHA-256</option>
@@ -227,8 +215,8 @@
     </div>
     <p class="dlg-error" id="editError" hidden></p>
     <div class="dlg-actions">
-      <button class="btn btn-ghost" value="cancel" type="submit">Huỷ</button>
-      <button class="btn btn-primary" id="btnEditSave" value="save" type="submit">Lưu</button>
+      <button class="btn btn-ghost" value="cancel" type="submit" data-i18n="btnCancel"></button>
+      <button class="btn btn-primary" id="btnEditSave" value="save" type="submit" data-i18n="btnSave"></button>
     </div>
   </form>
 </dialog>
@@ -236,20 +224,19 @@
 <!-- ============ Dialog: đặt mật khẩu chính ============ -->
 <dialog id="pwDialog" class="dlg">
   <form id="pwForm" autocomplete="off">
-    <h3 id="pwTitle">Đặt mật khẩu chính</h3>
+    <h3 id="pwTitle"></h3>
     <p class="muted small" id="pwIntro"></p>
-    <label>Mật khẩu mới
+    <label><span data-i18n="pwNew"></span>
       <input type="password" id="pwNew" autocomplete="new-password">
     </label>
-    <label>Nhập lại
+    <label><span data-i18n="pwConfirm"></span>
       <input type="password" id="pwConfirm" autocomplete="new-password">
     </label>
-    <p class="warn-box">Không có cách khôi phục. Quên mật khẩu là mất toàn bộ danh sách —
-      hãy xuất backup trước khi bật.</p>
+    <p class="warn-box" data-i18n="pwWarn"></p>
     <p class="dlg-error" id="pwError" hidden></p>
     <div class="dlg-actions">
-      <button class="btn btn-ghost" type="button" id="btnPwCancel">Huỷ</button>
-      <button class="btn btn-primary" id="btnPwOk" type="submit">Xác nhận</button>
+      <button class="btn btn-ghost" type="button" id="btnPwCancel" data-i18n="btnCancel"></button>
+      <button class="btn btn-primary" id="btnPwOk" type="submit" data-i18n="btnConfirm"></button>
     </div>
   </form>
 </dialog>
@@ -257,53 +244,60 @@
 <!-- ============ Dialog: cài đặt ============ -->
 <dialog id="settingsDialog" class="dlg">
   <form method="dialog">
-    <h3>Cài đặt</h3>
+    <h3 data-i18n="settingsHeading"></h3>
 
     <label class="check">
-      <input type="checkbox" id="sReveal"> Hiện secret key trong danh sách
+      <input type="checkbox" id="sReveal"> <span data-i18n="sReveal"></span>
     </label>
     <label class="check">
-      <input type="checkbox" id="sShowPw"> Hiện mật khẩu trong danh sách
+      <input type="checkbox" id="sShowPw"> <span data-i18n="sShowPw"></span>
     </label>
 
-    <label>Bù lệch đồng hồ (giây)
+    <label><span data-i18n="langLabel"></span>
+      <select id="sLang">
+        <option value="vi">Tiếng Việt</option>
+        <option value="en">English</option>
+      </select>
+    </label>
+
+    <label><span data-i18n="sOffset"></span>
       <input type="number" id="sOffset" step="1" value="0">
     </label>
-    <p class="muted small">Máy offline hay bị lệch giờ. Nếu mã luôn sai, chỉnh số này (+ hoặc −) rồi thử lại.
-      Đồng hồ hiện tại: <span id="clockNow">—</span></p>
+    <p class="muted small"><span data-i18n="offsetHint"></span> <span id="clockNow">—</span></p>
 
     <div class="sec-block">
-      <h4>Mật khẩu chính</h4>
+      <h4 data-i18n="mkHeading"></h4>
       <p class="muted small" id="encStatus">—</p>
       <div class="row-actions">
-        <button class="btn btn-sm" id="btnEncEnable" type="button">Bật mã hoá</button>
-        <button class="btn btn-sm" id="btnEncChange" type="button">Đổi mật khẩu</button>
-        <button class="btn btn-sm btn-danger" id="btnEncDisable" type="button">Tắt mã hoá</button>
+        <button class="btn btn-sm" id="btnEncEnable" type="button" data-i18n="btnEncEnable"></button>
+        <button class="btn btn-sm" id="btnEncChange" type="button" data-i18n="btnEncChange"></button>
+        <button class="btn btn-sm btn-danger" id="btnEncDisable" type="button" data-i18n="btnEncDisable"></button>
       </div>
-      <label>Tự khoá sau
+      <label><span data-i18n="autoLockLabel"></span>
         <select id="sAutoLock">
-          <option value="0">Không tự khoá</option>
-          <option value="1">1 phút không dùng</option>
-          <option value="5">5 phút không dùng</option>
-          <option value="15">15 phút không dùng</option>
-          <option value="60">60 phút không dùng</option>
+          <option value="0"></option>
+          <option value="1"></option>
+          <option value="5"></option>
+          <option value="15"></option>
+          <option value="60"></option>
         </select>
       </label>
     </div>
 
     <div class="danger-zone">
-      <button class="btn btn-danger btn-sm" id="btnWipe" type="button">Xoá toàn bộ dữ liệu</button>
+      <button class="btn btn-danger btn-sm" id="btnWipe" type="button" data-i18n="btnWipe"></button>
     </div>
 
     <div class="dlg-actions">
-      <button class="btn btn-primary" value="close" type="submit">Đóng</button>
+      <button class="btn btn-primary" value="close" type="submit" data-i18n="btnClose"></button>
     </div>
   </form>
 </dialog>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div id="busy" class="busy" hidden><div class="busy-box"><span class="spinner"></span><span id="busyText">Đang xử lý…</span></div></div>
+<div id="busy" class="busy" hidden><div class="busy-box"><span class="spinner"></span><span id="busyText"></span></div></div>
 
+<script src="js/i18n.js"></script>
 <script src="js/base32.js"></script>
 <script src="js/sha.js"></script>
 <script src="js/totp.js"></script>

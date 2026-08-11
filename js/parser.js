@@ -45,7 +45,7 @@
     }
 
     return {
-      label: label || issuer || 'Không tên',
+      label: label || issuer || '',
       password: '',
       secret: global.Base32.normalize(secret),
       issuer: issuer,
@@ -63,7 +63,7 @@
     if (parts.length === 1) {
       var only = parts[0].trim();
       if (!global.Base32.isValid(only)) return { error: 'Không nhận ra secret key hợp lệ' };
-      return build('Không tên', '', only);
+      return build('', '', only);
     }
 
     var secretIndex = parts.length - 1;
@@ -86,7 +86,7 @@
     var middle = parts.slice(1, secretIndex).concat(parts.slice(secretIndex + 1));
     var password = middle.join('|').trim();
 
-    return build(label || 'Không tên', password, parts[secretIndex]);
+    return build(label, password, parts[secretIndex]);
   }
 
   function build(label, password, secret) {

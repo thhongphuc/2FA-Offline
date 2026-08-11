@@ -64,14 +64,16 @@
     toastTimer = setTimeout(function () { els.toast.classList.remove('show'); }, 2400);
   }
 
-  function busy(on, text) {
-    els.busyText.textContent = text || 'Đang xử lý…';
+  var t = I18N.t;
+
+  function busy(on, textKey) {
+    els.busyText.textContent = t(textKey || 'busyDefault');
     els.busy.hidden = !on;
   }
 
   // navigator.clipboard không có trên file:// ở nhiều trình duyệt -> có đường lui.
-  function copy(text, label) {
-    function done() { toast('Đã copy ' + (label || '') + ': ' + text); }
+  function copy(text, whatKey) {
+    function done() { toast(t('toastCopied', { what: t(whatKey), value: text })); }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, function () { legacyCopy(text, done); });
     } else {
@@ -90,7 +92,7 @@
     try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
     document.body.removeChild(ta);
     if (ok) done();
-    else toast('Trình duyệt chặn copy — hãy bôi đen và Ctrl+C');
+    else toast(t('toastCopyBlocked'));
   }
 
   function nowMs() {
@@ -114,7 +116,7 @@
   function persist() {
     if (!enc.enabled) {
       if (!Vault.writeRaw({ version: Vault.VERSION, accounts: accounts, settings: settings })) {
-        toast('Không ghi được localStorage (chế độ riêng tư?)');
+        toast(t('toastNoStorage'));
       }
       return writeQueue;
     }
@@ -136,10 +138,10 @@
           ciphertext: enc.ciphertext,
           settings: settings
         });
-        if (!ok) toast('Không ghi được localStorage (chế độ riêng tư?)');
+        if (!ok) toast(t('toastNoStorage'));
       })
       .catch(function (err) {
-        toast('Lỗi mã hoá khi lưu: ' + (err.message || err));
+        toast(t('toastEncryptFail', { msg: err.message || err }));
       });
 
     return writeQueue;
@@ -173,20 +175,21 @@
     // vùng bấm để chọn, giữ hai công dụng cùng lúc sẽ gây bấm nhầm.
     var actions;
     if (!opts.saved) {
-      actions = '<button data-act="save" title="Lưu vào danh sách">＋</button>';
+      actions = '<button data-act="save" title="' + esc(t('cardSave')) + '">＋</button>';
     } else if (selectMode) {
       actions = '<span class="acct-check" aria-hidden="true"></span>';
     } else {
       actions =
-        '<button class="drag-handle" data-act="drag" draggable="true" title="Kéo để đổi thứ tự">⠿</button>' +
-        '<button data-act="edit" title="Sửa">✎</button>' +
-        '<button data-act="delete" title="Xoá">🗑</button>';
+        '<button class="drag-handle" data-act="drag" draggable="true" title="' +
+          esc(t('cardDrag')) + '">⠿</button>' +
+        '<button data-act="edit" title="' + esc(t('cardEdit')) + '">✎</button>' +
+        '<button data-act="delete" title="' + esc(t('cardDelete')) + '">🗑</button>';
     }
 
     el.innerHTML =
       '<div class="acct-top">' +
-        '<div class="acct-label" data-act="copy-label" title="Bấm để copy email / nhãn">' +
-          esc(acc.label) +
+        '<div class="acct-label" data-act="copy-label" title="' + esc(t('cardCopyLabel')) + '">' +
+          esc(acc.label || t('noName')) +
           (acc.issuer ? '<div class="acct-issuer">' + esc(acc.issuer) + '</div>' : '') +
           (acc.group
             ? '<div><span class="acct-group ' + groupColorClass(acc.group) + '">' +
@@ -196,7 +199,7 @@
         '<div class="acct-menu">' + actions + '</div>' +
       '</div>' +
       '<div class="acct-main">' +
-        '<div class="code" data-act="copy" title="Bấm để copy">••••••</div>' +
+        '<div class="code" data-act="copy" title="' + esc(t('cardCopyCode')) + '">••••••</div>' +
         '<div class="ring-wrap">' +
           '<svg class="ring" viewBox="0 0 36 36">' +
             '<circle class="ring-bg" cx="18" cy="18" r="' + RING_R + '"></circle>' +
@@ -207,13 +210,14 @@
         '</div>' +
       '</div>' +
       '<div class="acct-foot">' +
-        '<span class="secret-line" data-act="copy-secret" title="Bấm để copy secret">' +
+        '<span class="secret-line" data-act="copy-secret" title="' + esc(t('cardCopySecret')) + '">' +
           esc(maskSecret(acc.secret)) + '</span>' +
-        '<span class="acct-next">kế tiếp <b>------</b></span>' +
+        '<span class="acct-next">' + esc(t('cardNext')) + ' <b>------</b></span>' +
       '</div>' +
       (acc.password
         ? '<div class="acct-foot acct-foot-sub">' +
-            '<span class="pw-line" data-act="copy-password" title="Bấm để copy mật khẩu">🔑 ' +
+            '<span class="pw-line" data-act="copy-password" title="' +
+              esc(t('cardCopyPassword')) + '">🔑 ' +
               esc(maskPassword(acc.password)) + '</span>' +
             (acc.note ? '<span>' + esc(acc.note) + '</span>' : '') +
           '</div>'
@@ -257,21 +261,21 @@
   function onCardAction(act, card) {
     var acc = card.acc;
     if (act === 'copy') {
-      if (card.code) copy(card.code, 'mã');
+      if (card.code) copy(card.code, 'whatCode');
       return;
     }
-    if (act === 'copy-label') { copy(acc.label, 'email'); return; }
-    if (act === 'copy-secret') { copy(acc.secret, 'secret'); return; }
-    if (act === 'copy-password') { copy(acc.password, 'mật khẩu'); return; }
+    if (act === 'copy-label') { copy(acc.label, 'whatEmail'); return; }
+    if (act === 'copy-secret') { copy(acc.secret, 'whatSecret'); return; }
+    if (act === 'copy-password') { copy(acc.password, 'whatPassword'); return; }
     if (act === 'save') { saveAccount(acc); return; }
     if (act === 'edit') { openEdit(acc); return; }
     if (act === 'delete') {
-      if (!window.confirm('Xoá "' + acc.label + '" khỏi danh sách?')) return;
+      if (!window.confirm(t('confirmDeleteOne', { label: acc.label || t('noName') }))) return;
       accounts = accounts.filter(function (a) { return a.id !== acc.id; });
       delete selected[acc.id];
       persist();
       rebuildCards();
-      toast('Đã xoá');
+      toast(t('toastDeleted'));
     }
   }
 
@@ -310,7 +314,7 @@
       card.counter = counter;
       card.code = null;
       card.codeEl.classList.add('err');
-      card.codeEl.textContent = err.message || 'Lỗi sinh mã';
+      card.codeEl.textContent = err.message || t('errGenerate');
       card.nextEl.textContent = '------';
       card.el.classList.add('invalid');
     });
@@ -366,11 +370,12 @@
 
     if (!accounts.length) {
       els.vaultEmpty.hidden = false;
-      els.vaultEmpty.textContent =
-        'Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm Lưu vào danh sách.';
+      els.vaultEmpty.innerHTML = t('emptyDefault');
     } else if (!visible) {
       els.vaultEmpty.hidden = false;
       els.vaultEmpty.textContent = emptyFilterMessage();
+      // textContent, không innerHTML: emptyFilterMessage nhúng tên nhóm và từ khoá
+      // do người dùng nhập.
     } else {
       els.vaultEmpty.hidden = true;
     }
@@ -380,9 +385,10 @@
 
   function emptyFilterMessage() {
     var where = activeGroup === null ? ''
-      : (activeGroup === '' ? ' trong mục "Chưa phân nhóm"' : ' trong nhóm "' + activeGroup + '"');
-    if (!filter) return 'Không có tài khoản nào' + where + '.';
-    return 'Không có tài khoản nào khớp "' + filter + '"' + where + '.';
+      : (activeGroup === '' ? t('whereUngrouped') : t('whereGroup', { g: activeGroup }));
+    return filter
+      ? t('emptyNoMatch', { q: filter, where: where })
+      : t('emptyNoneIn', { where: where });
   }
 
   // Nhóm và ô tìm kiếm kết hợp theo kiểu AND.
@@ -448,9 +454,9 @@
       return;
     }
 
-    var html = chipHtml('Tất cả', accounts.length, null);
+    var html = chipHtml(t('chipAll'), accounts.length, null);
     names.forEach(function (g) { html += chipHtml(g, countIn(g), g); });
-    if (ungrouped) html += chipHtml('Chưa phân nhóm', ungrouped, '', 'chip-none');
+    if (ungrouped) html += chipHtml(t('chipUngrouped'), ungrouped, '', 'chip-none');
 
     els.groupBar.innerHTML = html;
     els.groupBar.hidden = false;
@@ -487,7 +493,7 @@
     ['btnBulkAssign', 'btnBulkUngroup', 'btnBulkDelete'].forEach(function (id) {
       $(id).disabled = n === 0;
     });
-    $('btnSelectMode').textContent = selectMode ? 'Xong' : 'Chọn';
+    $('btnSelectMode').textContent = t(selectMode ? 'btnSelectDone' : 'btnSelect');
   }
 
   function setSelectMode(on) {
@@ -502,7 +508,7 @@
     return accounts.filter(matchesFilter);
   }
 
-  function applyToSelected(fn, verb) {
+  function applyToSelected(fn, msgKey, params) {
     var ids = selectedIds();
     if (!ids.length) return;
     var set = {};
@@ -511,7 +517,7 @@
     persist();
     rebuildCards();
     refreshBulkBar();
-    toast(verb.replace('{n}', ids.length));
+    toast(t(msgKey, Vault.assign({ n: ids.length }, params)));
   }
 
   $('btnSelectMode').addEventListener('click', function () { setSelectMode(!selectMode); });
@@ -530,19 +536,19 @@
 
   $('btnBulkAssign').addEventListener('click', function () {
     var g = $('bulkGroup').value.trim();
-    if (!g) { toast('Nhập tên nhóm trước'); return; }
-    applyToSelected(function (a) { a.group = g; }, 'Đã chuyển {n} tài khoản sang nhóm "' + g + '"');
+    if (!g) { toast(t('toastNeedGroupName')); return; }
+    applyToSelected(function (a) { a.group = g; }, 'toastBulkAssigned', { g: g });
     $('bulkGroup').value = '';
   });
 
   $('btnBulkUngroup').addEventListener('click', function () {
-    applyToSelected(function (a) { a.group = ''; }, 'Đã bỏ {n} tài khoản khỏi nhóm');
+    applyToSelected(function (a) { a.group = ''; }, 'toastBulkUngrouped');
   });
 
   $('btnBulkDelete').addEventListener('click', function () {
     var ids = selectedIds();
     if (!ids.length) return;
-    if (!window.confirm('Xoá ' + ids.length + ' tài khoản đã chọn? Không thể hoàn tác.')) return;
+    if (!window.confirm(t('confirmBulkDelete', { n: ids.length }))) return;
     var set = {};
     ids.forEach(function (id) { set[id] = true; });
     accounts = accounts.filter(function (a) { return !set[a.id]; });
@@ -550,7 +556,7 @@
     persist();
     rebuildCards();
     refreshBulkBar();
-    toast('Đã xoá ' + ids.length + ' tài khoản');
+    toast(t('toastBulkDeleted', { n: ids.length }));
   });
 
   /* ---------------- Đổi tên / xoá nhóm ---------------- */
@@ -559,22 +565,21 @@
   $('btnGroupRename').addEventListener('click', function () {
     if (!activeGroup) return;
     var old = activeGroup;
-    var name = window.prompt('Tên mới cho nhóm "' + old + '":', old);
+    var name = window.prompt(t('promptRename', { g: old }), old);
     if (name === null) return;
     name = name.trim().slice(0, 40);
-    if (!name) { toast('Tên nhóm không được để trống'); return; }
+    if (!name) { toast(t('toastGroupEmptyName')); return; }
     if (name === old) return;
 
     var merging = groupNames().indexOf(name) !== -1;
-    if (merging && !window.confirm(
-      'Nhóm "' + name + '" đã tồn tại. Gộp "' + old + '" vào nhóm đó?')) return;
+    if (merging && !window.confirm(t('confirmGroupMerge', { g: name, old: old }))) return;
 
     var n = 0;
     accounts.forEach(function (a) { if (a.group === old) { a.group = name; n++; } });
     activeGroup = name;
     persist();
     rebuildCards();
-    toast((merging ? 'Đã gộp ' : 'Đã đổi tên nhóm, ') + n + ' tài khoản → "' + name + '"');
+    toast(t(merging ? 'toastGroupMerged' : 'toastGroupRenamed', { n: n, g: name }));
   });
 
   // Xoá nhóm KHÔNG xoá tài khoản — chúng chuyển về "Chưa phân nhóm".
@@ -582,15 +587,13 @@
     if (!activeGroup) return;
     var g = activeGroup;
     var n = countIn(g);
-    if (!window.confirm(
-      'Xoá nhóm "' + g + '"?\n\n' +
-      n + ' tài khoản trong nhóm sẽ KHÔNG bị xoá, chúng chuyển về "Chưa phân nhóm".')) return;
+    if (!window.confirm(t('confirmGroupDelete', { g: g, n: n }))) return;
 
     accounts.forEach(function (a) { if (a.group === g) a.group = ''; });
     activeGroup = null;
     persist();
     rebuildCards();
-    toast('Đã xoá nhóm "' + g + '", ' + n + ' tài khoản về Chưa phân nhóm');
+    toast(t('toastGroupDeleted', { g: g, n: n }));
   });
 
   els.groupBar.addEventListener('click', function (ev) {
@@ -611,7 +614,7 @@
     if (!handle) { ev.preventDefault(); return; }
     if (filter || activeGroup !== null) {
       ev.preventDefault();
-      toast('Về "Tất cả" và xoá ô tìm kiếm trước khi sắp xếp lại');
+      toast(t('toastClearFilterFirst'));
       return;
     }
     dragEl = handle.closest('.acct');
@@ -664,7 +667,7 @@
       return accounts.indexOf(x.acc) - accounts.indexOf(y.acc);
     });
     persist();
-    toast('Đã lưu thứ tự mới');
+    toast(t('toastOrderSaved'));
   }
 
   /* ---------------- Nhập liệu ---------------- */
@@ -674,7 +677,7 @@
     if (result.errors.length) {
       els.parseErrors.hidden = false;
       els.parseErrors.innerHTML =
-        '<b>' + result.errors.length + ' dòng không đọc được:</b>' +
+        '<b>' + esc(t('parseErrHeading', { n: result.errors.length })) + '</b>' +
         result.errors.slice(0, 8).map(function (e) {
           return '<div>' + esc(e.line.slice(0, 90)) + ' — ' + esc(e.message) + '</div>';
         }).join('');
@@ -700,26 +703,26 @@
       return Vault.sanitize(Vault.assign({ id: Vault.newId(), group: g }, e));
     });
     rebuildCards();
-    if (quickEntries.length) toast('Đã tạo mã cho ' + quickEntries.length + ' tài khoản');
-    else if (!result.errors.length) toast('Chưa có gì để tạo mã');
+    if (quickEntries.length) toast(t('toastGenerated', { n: quickEntries.length }));
+    else if (!result.errors.length) toast(t('toastNothingToGen'));
   }
 
   function saveAccount(acc) {
     if (locked) return;
     var dup = accounts.filter(function (a) { return a.secret === acc.secret; })[0];
-    if (dup) { toast('Secret này đã có trong danh sách (' + dup.label + ')'); return; }
+    if (dup) { toast(t('toastDupSecret', { label: dup.label || t('noName') })); return; }
     accounts.push(Vault.sanitize(Vault.assign({}, acc, { id: Vault.newId() })));
     persist();
     quickEntries = quickEntries.filter(function (a) { return a.secret !== acc.secret; });
     rebuildCards();
-    toast('Đã lưu ' + acc.label);
+    toast(t('toastSavedOne', { label: acc.label || t('noName') }));
   }
 
   function saveAllFromInput() {
     if (locked) return;
     var result = readInput();
     var entries = result.entries;
-    if (!entries.length) { toast('Không có dòng nào hợp lệ để lưu'); return; }
+    if (!entries.length) { toast(t('toastNoValidLine')); return; }
 
     var existing = {};
     accounts.forEach(function (a) { existing[a.secret] = true; });
@@ -737,8 +740,9 @@
     quickEntries = [];
     els.input.value = '';
     rebuildCards();
-    toast('Đã lưu ' + added + ' tài khoản' + (g ? ' vào nhóm "' + g + '"' : '') +
-          (skipped ? ' (bỏ qua ' + skipped + ' trùng)' : ''));
+    toast(t('toastSavedMany', { n: added }) +
+          (g ? t('toastIntoGroup', { g: g }) : '') +
+          (skipped ? t('toastSkippedDup', { n: skipped }) : ''));
   }
 
   /* ---------------- Dialog sửa ---------------- */
@@ -747,7 +751,7 @@
 
   function openEdit(acc) {
     editing = acc;
-    $('editTitle').textContent = 'Sửa tài khoản';
+    $('editTitle').textContent = t('editTitle');
     $('fLabel').value = acc.label;
     $('fPassword').value = acc.password || '';
     $('fSecret').value = acc.secret;
@@ -767,12 +771,12 @@
     if (!Base32.isValid(secret)) {
       ev.preventDefault();
       var errEl = $('editError');
-      errEl.textContent = 'Secret key không hợp lệ (chỉ gồm A–Z, 2–7, tối thiểu 8 ký tự).';
+      errEl.textContent = t('errBadSecret');
       errEl.hidden = false;
       return;
     }
 
-    editing.label = $('fLabel').value.trim() || 'Không tên';
+    editing.label = $('fLabel').value.trim();
     editing.password = $('fPassword').value;
     editing.secret = secret;
     editing.group = $('fGroup').value.trim();
@@ -783,7 +787,7 @@
 
     persist();
     rebuildCards();
-    toast('Đã cập nhật');
+    toast(t('toastUpdated'));
   });
 
   /* ---------------- Mã hoá vault ---------------- */
@@ -791,9 +795,9 @@
   // Dialog đặt mật khẩu, dùng chung cho "bật mã hoá" và "đổi mật khẩu".
   var pwResolve = null;
 
-  function askPassword(title, intro) {
-    $('pwTitle').textContent = title;
-    $('pwIntro').textContent = intro || '';
+  function askPassword(titleKey, introKey) {
+    $('pwTitle').textContent = t(titleKey);
+    $('pwIntro').textContent = t(introKey);
     $('pwNew').value = '';
     $('pwConfirm').value = '';
     $('pwError').hidden = true;
@@ -809,12 +813,12 @@
     var err = $('pwError');
 
     if (pw.length < 8) {
-      err.textContent = 'Mật khẩu cần ít nhất 8 ký tự.';
+      err.textContent = t('pwErrShort');
       err.hidden = false;
       return;
     }
     if (pw !== confirm2) {
-      err.textContent = 'Hai ô mật khẩu không khớp.';
+      err.textContent = t('pwErrMismatch');
       err.hidden = false;
       return;
     }
@@ -841,11 +845,11 @@
   function enableEncryption() {
     if (!VaultCrypto.available()) { toast(cryptoUnavailableMsg()); return; }
 
-    askPassword('Bật mã hoá', 'Toàn bộ secret key sẽ được mã hoá AES-256-GCM trước khi ghi xuống trình duyệt.')
+    askPassword('pwTitleEnable', 'pwIntroEnable')
       .then(function (pw) {
         if (!pw) return;
         var kdf = VaultCrypto.newKdfParams();
-        busy(true, 'Đang tạo khoá (~1 giây)…');
+        busy(true, 'busyDerive');
         return VaultCrypto.deriveFromParams(pw, kdf).then(function (key) {
           cryptoKey = key;
           enc.enabled = true;
@@ -854,42 +858,40 @@
         }).then(function () {
           busy(false);
           refreshEncUi();
-          toast('Đã bật mã hoá. Đừng quên mật khẩu này.');
+          toast(t('toastEncOn'));
         });
       })
       .catch(function (err) {
         busy(false);
-        toast('Không bật được mã hoá: ' + (err.message || err));
+        toast(t('toastEncFail', { msg: err.message || err }));
       });
   }
 
   function changePassword() {
     if (!enc.enabled || !cryptoKey) return;
-    askPassword('Đổi mật khẩu chính', 'Danh sách sẽ được mã hoá lại bằng mật khẩu mới.')
+    askPassword('pwTitleChange', 'pwIntroChange')
       .then(function (pw) {
         if (!pw) return;
         var kdf = VaultCrypto.newKdfParams();
-        busy(true, 'Đang tạo khoá (~1 giây)…');
+        busy(true, 'busyDerive');
         return VaultCrypto.deriveFromParams(pw, kdf).then(function (key) {
           cryptoKey = key;
           enc.kdf = kdf;
           return persist();
         }).then(function () {
           busy(false);
-          toast('Đã đổi mật khẩu');
+          toast(t('toastPwChanged'));
         });
       })
       .catch(function (err) {
         busy(false);
-        toast('Không đổi được mật khẩu: ' + (err.message || err));
+        toast(t('toastPwChangeFail', { msg: err.message || err }));
       });
   }
 
   function disableEncryption() {
     if (!enc.enabled) return;
-    if (!window.confirm(
-      'Tắt mã hoá? Secret key sẽ quay lại dạng văn bản thường trong localStorage, ' +
-      'ai mở trình duyệt này cũng đọc được.')) return;
+    if (!window.confirm(t('confirmEncOff'))) return;
 
     enc.enabled = false;
     enc.kdf = null;
@@ -898,12 +900,11 @@
     cryptoKey = null;
     persist();
     refreshEncUi();
-    toast('Đã tắt mã hoá');
+    toast(t('toastEncOff'));
   }
 
   function cryptoUnavailableMsg() {
-    return 'Trình duyệt không cấp Web Crypto ở đây (thường do mở bằng file://). ' +
-           'Hãy chạy qua http://localhost để dùng mã hoá.';
+    return t('cryptoUnavailable');
   }
 
   function refreshEncUi() {
@@ -914,16 +915,15 @@
     $('btnLock').hidden = !enc.enabled || locked;
 
     var status;
-    if (!supported && !enc.enabled) status = 'Không khả dụng — ' + cryptoUnavailableMsg();
-    else if (enc.enabled) status = 'Đang BẬT. Vault được mã hoá AES-256-GCM, khoá dẫn xuất bằng PBKDF2-SHA256 ' +
-      VaultCrypto.ITERATIONS.toLocaleString('vi-VN') + ' vòng.';
-    else status = 'Đang TẮT. Secret key nằm dạng văn bản thường trong localStorage.';
+    var status;
+    if (!supported && !enc.enabled) status = t('encStatusUnavailable', { msg: cryptoUnavailableMsg() });
+    else if (enc.enabled) {
+      var locale = I18N.getLang() === 'vi' ? 'vi-VN' : 'en-US';
+      status = t('encStatusOn', { n: VaultCrypto.ITERATIONS.toLocaleString(locale) });
+    } else status = t('encStatusOff');
     $('encStatus').textContent = status;
 
-    $('footSecurity').innerHTML = enc.enabled
-      ? '<b>Bảo mật:</b> vault đang được mã hoá bằng mật khẩu chính. File backup xuất ra vẫn là văn bản thường — cất kỹ.'
-      : '<b>Lưu ý bảo mật:</b> secret key được lưu dạng văn bản thường trong <code>localStorage</code> của trình duyệt này. ' +
-        'Bật <b>mật khẩu chính</b> trong Cài đặt để mã hoá.';
+    $('footSecurity').innerHTML = t(enc.enabled ? 'footSecOn' : 'footSecOff');
   }
 
   /* ---------------- Khoá / mở khoá ---------------- */
@@ -935,6 +935,7 @@
   var LOCKABLE_IDS = [
     'input', 'saveGroup', 'btnGenerate', 'btnSaveAll', 'btnClearInput', 'btnFormatHelp',
     'search', 'btnSelectMode', 'btnExportJson', 'btnExportTxt', 'btnImport', 'fileImport',
+    'btnLang',
     'bulkGroup', 'btnBulkAssign', 'btnBulkUngroup', 'btnBulkSelectAll', 'btnBulkClear',
     'btnBulkDelete', 'btnGroupRename', 'btnGroupDelete',
     'btnSettings', 'btnGuide', 'btnTheme'
@@ -999,7 +1000,7 @@
     if (!pw) return;
     var err = $('lockErr');
     err.hidden = true;
-    busy(true, 'Đang giải mã (~1 giây)…');
+    busy(true, 'busyDecrypt');
 
     VaultCrypto.deriveFromParams(pw, enc.kdf)
       .then(function (key) {
@@ -1012,30 +1013,20 @@
           rebuildCards();
           refreshEncUi();
           markActivity();
-          toast('Đã mở khoá — ' + accounts.length + ' tài khoản');
+          toast(t('toastUnlocked', { n: accounts.length }));
         });
       })
       .catch(function () {
         // AES-GCM tự xác thực: sai mật khẩu là giải mã ném lỗi, không cần lưu hash riêng.
         busy(false);
-        err.textContent = 'Sai mật khẩu.';
+        err.textContent = t('lockErrWrongPw');
         err.hidden = false;
         $('lockPw').select();
       });
   });
 
   $('btnForgot').addEventListener('click', function () {
-    window.alert(
-      'Không có cách khôi phục.\n\n' +
-      'Khoá mã hoá được dẫn xuất trực tiếp từ mật khẩu bạn gõ vào và không được lưu ở ' +
-      'bất kỳ đâu — không trên máy bạn, không ở server nào. Không ai mở khoá hộ bạn được, ' +
-      'kể cả người làm ra trang này.\n\n' +
-      'CÓ file backup .json/.txt đã xuất trước đó:\n' +
-      'Bấm "Xoá toàn bộ dữ liệu và bắt đầu lại" ngay dưới, rồi dùng "Nhập file" để khôi phục.\n\n' +
-      'KHÔNG có backup:\n' +
-      'Secret key đã mất vĩnh viễn. Bạn phải vào từng dịch vụ (Google, Facebook…), ' +
-      'đăng nhập bằng mã dự phòng hoặc email, rồi thiết lập lại 2FA từ đầu để lấy secret mới.'
-    );
+    window.alert(t('alertForgot'));
   });
 
   $('btnLock').addEventListener('click', lockNow);
@@ -1053,7 +1044,7 @@
     if (!minutes || !enc.enabled || locked || !cryptoKey) return;
     if (Date.now() - lastActivity >= minutes * 60000) {
       lockNow();
-      toast('Đã tự khoá sau ' + minutes + ' phút không dùng');
+      toast(minutes === 1 ? t('toastAutoLocked1') : t('toastAutoLocked', { n: minutes }));
     }
   }, 5000);
 
@@ -1079,21 +1070,21 @@
 
   function exportJson() {
     if (locked) return;
-    if (!accounts.length) { toast('Danh sách trống'); return; }
+    if (!accounts.length) { toast(t('toastEmptyList')); return; }
     download('2fa-backup-' + stamp() + '.json',
       JSON.stringify({ version: Vault.VERSION, exportedAt: new Date().toISOString(), accounts: accounts }, null, 2),
       'application/json');
-    toast('File backup chứa secret dạng thường — cất kỹ');
+    toast(t('toastBackupWarn'));
   }
 
   function exportTxt() {
     if (locked) return;
-    if (!accounts.length) { toast('Danh sách trống'); return; }
+    if (!accounts.length) { toast(t('toastEmptyList')); return; }
     var lines = accounts.map(function (a) {
       return a.password ? a.label + '|' + a.password + '|' + a.secret : a.label + '|' + a.secret;
     });
     download('2fa-backup-' + stamp() + '.txt', lines.join('\r\n'));
-    toast('File backup chứa secret dạng thường — cất kỹ');
+    toast(t('toastBackupWarn'));
   }
 
   function importFile(file) {
@@ -1109,13 +1100,13 @@
           var list = Array.isArray(data) ? data : (data.accounts || []);
           entries = list.map(function (a) { return Vault.sanitize(a); });
         } catch (err) {
-          toast('File JSON hỏng');
+          toast(t('toastBadJson'));
           return;
         }
       } else {
         var parsed = Parser.parseText(text);
         entries = parsed.entries.map(function (e) { return Vault.sanitize(Vault.assign({ id: Vault.newId() }, e)); });
-        if (parsed.errors.length) toast(parsed.errors.length + ' dòng bị bỏ qua');
+        if (parsed.errors.length) toast(t('toastLinesSkipped', { n: parsed.errors.length }));
       }
 
       var existing = {};
@@ -1132,7 +1123,7 @@
 
       persist();
       rebuildCards();
-      toast('Đã nhập ' + added + ' tài khoản');
+      toast(t('toastImported', { n: added }));
     };
     reader.readAsText(file);
   }
@@ -1142,6 +1133,41 @@
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', settings.theme);
   }
+
+  /* ---------------- Ngôn ngữ ---------------- */
+
+  // Các <option> tự khoá phải dựng bằng JS vì nội dung có chèn số phút.
+  function fillAutoLockOptions() {
+    var sel = $('sAutoLock');
+    for (var i = 0; i < sel.options.length; i++) {
+      var v = parseInt(sel.options[i].value, 10) || 0;
+      sel.options[i].textContent =
+        !v ? t('autoLock0') : (v === 1 ? t('autoLock1') : t('autoLockN', { n: v }));
+    }
+  }
+
+  // Đổi ngôn ngữ phải vẽ lại cả phần tĩnh lẫn phần do JS sinh ra.
+  function applyLanguage(lang) {
+    I18N.setLang(lang);
+    fillAutoLockOptions();
+    $('sLang').value = I18N.getLang();
+    refreshCryptoNote();
+    refreshEncUi();
+    rebuildCards();       // thẻ, chip nhóm, thông báo rỗng
+    refreshBulkBar();     // nhãn nút Chọn/Xong
+  }
+
+  function setLanguage(lang) {
+    settings.lang = lang;
+    applyLanguage(lang);
+    persistSettings();
+  }
+
+  $('btnLang').addEventListener('click', function () {
+    setLanguage(I18N.getLang() === 'vi' ? 'en' : 'vi');
+  });
+
+  $('sLang').addEventListener('change', function () { setLanguage($('sLang').value); });
 
   function openSettings() {
     if (locked) return;
@@ -1190,12 +1216,12 @@
     applyGuideState();
     rebuildCards();
     refreshEncUi();
-    toast('Đã xoá toàn bộ dữ liệu');
+    toast(t('toastWiped'));
   }
 
   $('btnWipe').addEventListener('click', function () {
-    if (!window.confirm('Xoá TOÀN BỘ tài khoản đã lưu? Không thể hoàn tác.')) return;
-    if (!window.confirm('Chắc chắn chứ? Hãy xuất backup trước nếu cần.')) return;
+    if (!window.confirm(t('confirmWipe1'))) return;
+    if (!window.confirm(t('confirmWipe2'))) return;
     if (els.settingsDialog.open) els.settingsDialog.close();
     wipeAll();
   });
@@ -1203,11 +1229,8 @@
   // Lối thoát duy nhất khi quên mật khẩu: màn khoá che kín trang nên không thể
   // với tới nút Xoá trong Cài đặt.
   $('btnLockWipe').addEventListener('click', function () {
-    if (!window.confirm(
-      'XOÁ TOÀN BỘ DỮ LIỆU?\n\n' +
-      'Danh sách đang mã hoá sẽ bị xoá vĩnh viễn. Nếu bạn KHÔNG có file backup ' +
-      '.json/.txt đã xuất trước đó, toàn bộ secret key sẽ mất và không lấy lại được.')) return;
-    if (!window.confirm('Xác nhận lần cuối: xoá sạch và bắt đầu lại từ đầu?')) return;
+    if (!window.confirm(t('confirmLockWipe1'))) return;
+    if (!window.confirm(t('confirmLockWipe2'))) return;
     wipeAll();
   });
 
@@ -1279,6 +1302,12 @@
     settings = Vault.readSettings(raw);
     applyTheme();
 
+    // Chưa từng chọn thì dò theo ngôn ngữ trình duyệt, và KHÔNG ghi xuống —
+    // để lần sau trình duyệt đổi ngôn ngữ thì trang vẫn theo.
+    I18N.setLang(settings.lang || I18N.detect());
+    fillAutoLockOptions();
+    $('sLang').value = I18N.getLang();
+
     if (raw && raw.encrypted) {
       enc.enabled = true;
       enc.kdf = raw.kdf;
@@ -1288,7 +1317,7 @@
       refreshEncUi();
       showLock(VaultCrypto.available()
         ? null
-        : 'Vault đã mã hoá nhưng trình duyệt không cấp Web Crypto ở đây. Hãy mở trang qua http://localhost.');
+        : t('lockErrNoCrypto'));
     } else {
       accounts = ((raw && raw.accounts) || []).map(Vault.sanitize);
       rebuildCards();
@@ -1306,9 +1335,11 @@
   }, 1000);
 
   // Cho người dùng biết đang chạy bằng Web Crypto hay bản dự phòng JS.
-  els.cryptoNote.textContent = (window.crypto && window.crypto.subtle)
-    ? 'Đang dùng Web Crypto của trình duyệt. Trang này không gửi request nào ra ngoài.'
-    : 'Web Crypto không khả dụng (thường do mở bằng file://) — đang dùng bản HMAC thuần JS. SHA-1/SHA-256 vẫn chạy đúng; SHA-512 và mã hoá vault cần chạy qua http://localhost.';
+  function refreshCryptoNote() {
+    els.cryptoNote.textContent =
+      t((window.crypto && window.crypto.subtle) ? 'cryptoNoteOk' : 'cryptoNoteFallback');
+  }
+  refreshCryptoNote();
 
   // Khối ủng hộ chỉ hiện khi ảnh QR thực sự tải được. Chưa bỏ file vào repo thì
   // im lặng bỏ qua, thay vì để lộ một ảnh vỡ trên trang công khai.

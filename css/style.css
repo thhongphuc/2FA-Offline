@@ -94,6 +94,7 @@ body {
   cursor: pointer;
 }
 .icon-btn:hover { background: var(--bg-input); color: var(--text); }
+.icon-btn-text { font-size: 11.5px; font-weight: 700; letter-spacing: .4px; }
 
 /* ---------- Layout ---------- */
 main {
@@ -522,25 +523,32 @@ input[type="search"] { width: 190px; }
 .crypto-note { font-size: 12px; }
 
 .support {
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 18px;
+  padding: 20px 16px;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   background: var(--bg-elev);
   text-align: center;
 }
 .support h2 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--text); }
-.support p { margin: 0 auto; max-width: 420px; font-size: 12.5px; }
+.support p { margin: 0 auto; max-width: 400px; font-size: 12.5px; line-height: 1.6; }
+
+/* Ảnh QR thường đã tự có khung và nền riêng (VietQR, app ngân hàng…), nên KHÔNG
+   bọc thêm nền trắng hay padding — làm vậy sinh ra một vành trắng thừa quanh ảnh.
+   Chỉ bo góc và cắt gọn phần thừa. */
 .support img {
   display: block;
-  margin: 12px auto 8px;
-  width: 190px;
-  height: 190px;
+  margin: 14px auto 10px;
+  width: 200px;
+  height: auto;
   max-width: 100%;
-  border-radius: 10px;
-  background: #fff;      /* QR cần nền sáng để quét được ở dark mode */
-  padding: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  object-fit: contain;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, .28);
 }
+[data-theme="light"] .support img { box-shadow: 0 2px 12px rgba(0, 0, 0, .12); }
+
 .support-note { color: var(--text-mute); font-size: 11.5px !important; }
 
 .credit {

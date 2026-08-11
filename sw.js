@@ -1,10 +1,11 @@
 // Service worker: cache toàn bộ asset để chạy khi mất mạng.
 // Không fetch bất cứ thứ gì từ bên ngoài.
-var CACHE = '2fa-offline-v2';
+var CACHE = '2fa-offline-v3';
 var ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './js/i18n.js',
   './js/base32.js',
   './js/sha.js',
   './js/totp.js',

@@ -1,0 +1,475 @@
+// Đa ngôn ngữ. Chuỗi tĩnh đánh dấu bằng data-i18n trong HTML; chuỗi động lấy
+// qua I18N.t(). Không tải file ngoài — mọi thứ nằm sẵn ở đây để giữ đúng cam
+// kết offline và CSP connect-src 'none'.
+(function (global) {
+  'use strict';
+
+  var DICT = {
+    vi: {
+      htmlLang: 'vi',
+      docTitle: '2FA Offline — Tạo mã xác thực tại máy',
+      langSwitchTitle: 'Switch to English',
+      langSwitchLabel: 'EN',
+
+      brandSub: 'Sinh mã TOTP ngay trên máy bạn',
+      netBadge: 'Không cần mạng',
+      netBadgeTitle: 'Trang không gửi bất kỳ dữ liệu nào ra ngoài',
+      lockNow: 'Khoá ngay',
+      guideBtn: 'Hướng dẫn sử dụng',
+      themeBtn: 'Đổi giao diện sáng/tối',
+      settingsBtn: 'Cài đặt',
+
+      guideHeading: 'Hướng dẫn sử dụng',
+      guideClose: 'Đóng hướng dẫn',
+      guideStep1: '<b>Dán tài khoản</b> vào ô bên dưới, mỗi dòng một tài khoản, theo dạng <code>email|password|secret</code>. Dán bao nhiêu dòng cùng lúc cũng được.',
+      guideStep2: '<b>Bấm "Tạo mã"</b> để xem mã ngay, hoặc <b>"Lưu vào danh sách"</b> nếu muốn dùng lại lần sau mà không phải dán lại.',
+      guideStep3: '<b>Bấm vào con số</b> để copy mã. Bấm vào email, dòng secret hoặc dòng 🔑 để copy email / secret / mật khẩu.',
+      guideStep4: '<b>Vòng tròn</b> là thời gian còn lại của mã. Mã tự đổi mỗi 30 giây; khi còn dưới 5 giây vòng tròn chuyển vàng, và <b>mã kế tiếp</b> đã hiện sẵn ở góc phải.',
+      guideStep5: 'Trong <b>Cài đặt ⚙</b>: bật <b>mật khẩu chính</b> để mã hoá dữ liệu, chỉnh <b>bù lệch đồng hồ</b> nếu mã luôn bị báo sai, và <b>xuất backup</b> ở mục "Danh sách đã lưu".',
+      guideRiskTitle: '⚠ Rủi ro cần biết trước khi dùng',
+      guideRisk1: '<b>Dữ liệu chỉ nằm trên máy bạn.</b> Trang này không có server, không gửi gì đi đâu. Đổi máy, đổi trình duyệt, hoặc mở ở chế độ ẩn danh là danh sách trống — không có đồng bộ, không có khôi phục từ đám mây.',
+      guideRisk2: '<b>Xoá cache là mất dữ liệu.</b> Dọn "dữ liệu duyệt web" hay gỡ trình duyệt sẽ xoá luôn danh sách. <b>Hãy xuất backup <code>.json</code> ngay sau khi lưu tài khoản.</b>',
+      guideRisk3: '<b>Đừng dùng trên máy công cộng hay máy dùng chung.</b> Secret key nằm lại trong trình duyệt của máy đó. Nếu buộc phải dùng, hãy xoá toàn bộ dữ liệu trước khi rời máy.',
+      guideRisk4: '<b>Chưa bật mật khẩu chính thì secret là văn bản thường.</b> Bất kỳ ai mở được trình duyệt này, hoặc extension có quyền đọc trang, đều lấy được.',
+      guideRisk5: '<b>Đây là trang web, code tải qua mạng mỗi lần mở.</b> Bạn đang tin vào người vận hành trang. Nếu bạn giữ tài khoản có giá trị, hãy tải toàn bộ file về máy rồi mở <code>index.html</code> — lúc đó không còn phụ thuộc ai nữa.',
+      guideRisk6: '<b>Tài khoản quan trọng thì đừng dùng công cụ web.</b> Ngân hàng, email chính, ví tiền số — hãy dùng app điện thoại như Aegis, Ente Auth hoặc 2FAS.',
+
+      inputHeading: 'Nhập tài khoản',
+      formatHelpBtn: 'Định dạng hỗ trợ?',
+      inputPlaceholder: 'email|password|secret\nMỗi dòng một tài khoản. Ví dụ:\nabc@icloud.com|MatKhau123|DQSJC355NQ7BMDODVYIOXVJJYX56Z7AM',
+      fmt1: '<code>email|password|secret</code> — dạng đầy đủ (password chứa ký tự <code>|</code> vẫn nhận đúng)',
+      fmt2: '<code>email|secret</code>',
+      fmt3: '<code>secret</code> — chỉ mỗi Base32 key',
+      fmt4: '<code>otpauth://totp/...</code> — URI chuẩn, tự đọc digits/period/algorithm',
+      btnGenerate: 'Tạo mã',
+      btnSaveAll: 'Lưu vào danh sách',
+      btnClearInput: 'Xoá ô nhập',
+      saveGroupLabel: 'Lưu vào nhóm',
+      saveGroupPlaceholder: '(không nhóm)',
+
+      vaultHeading: 'Danh sách đã lưu',
+      searchPlaceholder: 'Tìm email / nhãn…',
+      btnSelect: 'Chọn',
+      btnSelectDone: 'Xong',
+      btnExportJson: 'Xuất .json',
+      btnExportTxt: 'Xuất .txt',
+      btnImport: 'Nhập file',
+      groupWord: 'Nhóm',
+      btnGroupRename: 'Đổi tên nhóm',
+      btnGroupDelete: 'Xoá nhóm',
+      bulkSelected: 'Đã chọn',
+      bulkGroupPlaceholder: 'Tên nhóm…',
+      btnBulkAssign: 'Gán vào nhóm',
+      btnBulkUngroup: 'Bỏ khỏi nhóm',
+      btnBulkSelectAll: 'Chọn hết đang hiện',
+      btnBulkClear: 'Bỏ chọn',
+      btnBulkDelete: 'Xoá đã chọn',
+
+      chipAll: 'Tất cả',
+      chipUngrouped: 'Chưa phân nhóm',
+      emptyDefault: 'Chưa có tài khoản nào. Dán vào ô phía trên rồi bấm <b>Lưu vào danh sách</b>.',
+      emptyNoneIn: 'Không có tài khoản nào{where}.',
+      emptyNoMatch: 'Không có tài khoản nào khớp "{q}"{where}.',
+      whereUngrouped: ' trong mục "Chưa phân nhóm"',
+      whereGroup: ' trong nhóm "{g}"',
+
+      cardCopyCode: 'Bấm để copy',
+      cardCopyLabel: 'Bấm để copy email / nhãn',
+      cardCopySecret: 'Bấm để copy secret',
+      cardCopyPassword: 'Bấm để copy mật khẩu',
+      cardDrag: 'Kéo để đổi thứ tự',
+      cardEdit: 'Sửa',
+      cardDelete: 'Xoá',
+      cardSave: 'Lưu vào danh sách',
+      cardNext: 'kế tiếp',
+      noName: 'Không tên',
+
+      supportHeading: 'Ủng hộ',
+      supportText: 'Công cụ này miễn phí, không quảng cáo và không thu thập gì. Nếu nó có ích với bạn, bạn có thể mời tôi một ly cà phê.',
+      supportNote: 'Quét bằng app ngân hàng của bạn.',
+      qrAlt: 'Mã QR chuyển khoản ủng hộ tác giả',
+      credit: 'Phát triển bởi <b>Tống Huỳnh Hồng Phúc</b>',
+
+      lockHeading: 'Danh sách đang khoá',
+      lockSub: 'Nhập mật khẩu chính để giải mã.',
+      lockPwPlaceholder: 'Mật khẩu chính',
+      btnUnlock: 'Mở khoá',
+      btnForgot: 'Quên mật khẩu?',
+      btnLockWipe: 'Xoá toàn bộ dữ liệu và bắt đầu lại',
+
+      editTitle: 'Sửa tài khoản',
+      fLabel: 'Email / nhãn',
+      fPassword: 'Mật khẩu',
+      fSecret: 'Secret key (Base32)',
+      fGroup: 'Nhóm',
+      fNote: 'Ghi chú',
+      optional: '(không bắt buộc)',
+      groupHint: '(để trống = chưa phân nhóm)',
+      fDigits: 'Số chữ số',
+      fPeriod: 'Chu kỳ (giây)',
+      fAlgorithm: 'Thuật toán',
+      btnCancel: 'Huỷ',
+      btnSave: 'Lưu',
+      errBadSecret: 'Secret key không hợp lệ (chỉ gồm A–Z, 2–7, tối thiểu 8 ký tự).',
+
+      pwTitleEnable: 'Bật mã hoá',
+      pwTitleChange: 'Đổi mật khẩu chính',
+      pwIntroEnable: 'Toàn bộ secret key sẽ được mã hoá AES-256-GCM trước khi ghi xuống trình duyệt.',
+      pwIntroChange: 'Danh sách sẽ được mã hoá lại bằng mật khẩu mới.',
+      pwNew: 'Mật khẩu mới',
+      pwConfirm: 'Nhập lại',
+      pwWarn: 'Không có cách khôi phục. Quên mật khẩu là mất toàn bộ danh sách — hãy xuất backup trước khi bật.',
+      btnConfirm: 'Xác nhận',
+      pwErrShort: 'Mật khẩu cần ít nhất 8 ký tự.',
+      pwErrMismatch: 'Hai ô mật khẩu không khớp.',
+
+      settingsHeading: 'Cài đặt',
+      sReveal: 'Hiện secret key trong danh sách',
+      sShowPw: 'Hiện mật khẩu trong danh sách',
+      sOffset: 'Bù lệch đồng hồ (giây)',
+      offsetHint: 'Máy offline hay bị lệch giờ. Nếu mã luôn sai, chỉnh số này (+ hoặc −) rồi thử lại. Đồng hồ hiện tại:',
+      mkHeading: 'Mật khẩu chính',
+      btnEncEnable: 'Bật mã hoá',
+      btnEncChange: 'Đổi mật khẩu',
+      btnEncDisable: 'Tắt mã hoá',
+      autoLockLabel: 'Tự khoá sau',
+      autoLock0: 'Không tự khoá',
+      autoLock1: '1 phút không dùng',
+      autoLockN: '{n} phút không dùng',
+      btnWipe: 'Xoá toàn bộ dữ liệu',
+      btnClose: 'Đóng',
+      langLabel: 'Ngôn ngữ',
+
+      busyDefault: 'Đang xử lý…',
+      busyDerive: 'Đang tạo khoá (~1 giây)…',
+      busyDecrypt: 'Đang giải mã (~1 giây)…',
+
+      toastCopied: 'Đã copy {what}: {value}',
+      whatCode: 'mã', whatEmail: 'email', whatSecret: 'secret', whatPassword: 'mật khẩu',
+      toastCopyBlocked: 'Trình duyệt chặn copy — hãy bôi đen và Ctrl+C',
+      toastNoStorage: 'Không ghi được localStorage (chế độ riêng tư?)',
+      toastEncryptFail: 'Lỗi mã hoá khi lưu: {msg}',
+      toastGenerated: 'Đã tạo mã cho {n} tài khoản',
+      toastNothingToGen: 'Chưa có gì để tạo mã',
+      toastDupSecret: 'Secret này đã có trong danh sách ({label})',
+      toastSavedOne: 'Đã lưu {label}',
+      toastNoValidLine: 'Không có dòng nào hợp lệ để lưu',
+      toastSavedMany: 'Đã lưu {n} tài khoản',
+      toastIntoGroup: ' vào nhóm "{g}"',
+      toastSkippedDup: ' (bỏ qua {n} trùng)',
+      toastDeleted: 'Đã xoá',
+      toastUpdated: 'Đã cập nhật',
+      toastOrderSaved: 'Đã lưu thứ tự mới',
+      toastClearFilterFirst: 'Về "Tất cả" và xoá ô tìm kiếm trước khi sắp xếp lại',
+      toastImported: 'Đã nhập {n} tài khoản',
+      toastBadJson: 'File JSON hỏng',
+      toastLinesSkipped: '{n} dòng bị bỏ qua',
+      toastEmptyList: 'Danh sách trống',
+      toastBackupWarn: 'File backup chứa secret dạng thường — cất kỹ',
+      toastEncOn: 'Đã bật mã hoá. Đừng quên mật khẩu này.',
+      toastEncOff: 'Đã tắt mã hoá',
+      toastPwChanged: 'Đã đổi mật khẩu',
+      toastEncFail: 'Không bật được mã hoá: {msg}',
+      toastPwChangeFail: 'Không đổi được mật khẩu: {msg}',
+      toastUnlocked: 'Đã mở khoá — {n} tài khoản',
+      toastAutoLocked: 'Đã tự khoá sau {n} phút không dùng',
+      toastAutoLocked1: 'Đã tự khoá sau 1 phút không dùng',
+      toastWiped: 'Đã xoá toàn bộ dữ liệu',
+      toastNeedGroupName: 'Nhập tên nhóm trước',
+      toastBulkAssigned: 'Đã chuyển {n} tài khoản sang nhóm "{g}"',
+      toastBulkUngrouped: 'Đã bỏ {n} tài khoản khỏi nhóm',
+      toastBulkDeleted: 'Đã xoá {n} tài khoản',
+      toastGroupEmptyName: 'Tên nhóm không được để trống',
+      toastGroupMerged: 'Đã gộp {n} tài khoản → "{g}"',
+      toastGroupRenamed: 'Đã đổi tên nhóm, {n} tài khoản → "{g}"',
+      toastGroupDeleted: 'Đã xoá nhóm "{g}", {n} tài khoản về Chưa phân nhóm',
+
+      confirmDeleteOne: 'Xoá "{label}" khỏi danh sách?',
+      confirmBulkDelete: 'Xoá {n} tài khoản đã chọn? Không thể hoàn tác.',
+      confirmWipe1: 'Xoá TOÀN BỘ tài khoản đã lưu? Không thể hoàn tác.',
+      confirmWipe2: 'Chắc chắn chứ? Hãy xuất backup trước nếu cần.',
+      confirmLockWipe1: 'XOÁ TOÀN BỘ DỮ LIỆU?\n\nDanh sách đang mã hoá sẽ bị xoá vĩnh viễn. Nếu bạn KHÔNG có file backup .json/.txt đã xuất trước đó, toàn bộ secret key sẽ mất và không lấy lại được.',
+      confirmLockWipe2: 'Xác nhận lần cuối: xoá sạch và bắt đầu lại từ đầu?',
+      confirmEncOff: 'Tắt mã hoá? Secret key sẽ quay lại dạng văn bản thường trong localStorage, ai mở trình duyệt này cũng đọc được.',
+      confirmGroupMerge: 'Nhóm "{g}" đã tồn tại. Gộp "{old}" vào nhóm đó?',
+      confirmGroupDelete: 'Xoá nhóm "{g}"?\n\n{n} tài khoản trong nhóm sẽ KHÔNG bị xoá, chúng chuyển về "Chưa phân nhóm".',
+      promptRename: 'Tên mới cho nhóm "{g}":',
+      alertForgot: 'Không có cách khôi phục.\n\nKhoá mã hoá được dẫn xuất trực tiếp từ mật khẩu bạn gõ vào và không được lưu ở bất kỳ đâu — không trên máy bạn, không ở server nào. Không ai mở khoá hộ bạn được, kể cả người làm ra trang này.\n\nCÓ file backup .json/.txt đã xuất trước đó:\nBấm "Xoá toàn bộ dữ liệu và bắt đầu lại" ngay dưới, rồi dùng "Nhập file" để khôi phục.\n\nKHÔNG có backup:\nSecret key đã mất vĩnh viễn. Bạn phải vào từng dịch vụ (Google, Facebook…), đăng nhập bằng mã dự phòng hoặc email, rồi thiết lập lại 2FA từ đầu để lấy secret mới.',
+
+      lockErrWrongPw: 'Sai mật khẩu.',
+      lockErrNoCrypto: 'Vault đã mã hoá nhưng trình duyệt không cấp Web Crypto ở đây. Hãy mở trang qua http://localhost.',
+      cryptoUnavailable: 'Trình duyệt không cấp Web Crypto ở đây (thường do mở bằng file://). Hãy chạy qua http://localhost để dùng mã hoá.',
+      encStatusUnavailable: 'Không khả dụng — {msg}',
+      encStatusOn: 'Đang BẬT. Vault được mã hoá AES-256-GCM, khoá dẫn xuất bằng PBKDF2-SHA256 {n} vòng.',
+      encStatusOff: 'Đang TẮT. Secret key nằm dạng văn bản thường trong localStorage.',
+      footSecOn: '<b>Bảo mật:</b> vault đang được mã hoá bằng mật khẩu chính. File backup xuất ra vẫn là văn bản thường — cất kỹ.',
+      footSecOff: '<b>Lưu ý bảo mật:</b> secret key được lưu dạng văn bản thường trong <code>localStorage</code> của trình duyệt này. Bật <b>mật khẩu chính</b> trong Cài đặt để mã hoá.',
+      cryptoNoteOk: 'Đang dùng Web Crypto của trình duyệt. Trang này không gửi request nào ra ngoài.',
+      cryptoNoteFallback: 'Web Crypto không khả dụng (thường do mở bằng file://) — đang dùng bản HMAC thuần JS. SHA-1/SHA-256 vẫn chạy đúng; SHA-512 và mã hoá vault cần chạy qua http://localhost.',
+      parseErrHeading: '{n} dòng không đọc được:',
+      errAlgoNeedsCrypto: '{algo} cần Web Crypto. Hãy chạy trang qua http://localhost thay vì mở file trực tiếp.',
+      errGenerate: 'Lỗi sinh mã'
+    },
+
+    en: {
+      htmlLang: 'en',
+      docTitle: '2FA Offline — TOTP codes generated on your device',
+      langSwitchTitle: 'Chuyển sang tiếng Việt',
+      langSwitchLabel: 'VI',
+
+      brandSub: 'TOTP codes generated on your own device',
+      netBadge: 'No network needed',
+      netBadgeTitle: 'This page never sends any data anywhere',
+      lockNow: 'Lock now',
+      guideBtn: 'How to use',
+      themeBtn: 'Toggle light/dark theme',
+      settingsBtn: 'Settings',
+
+      guideHeading: 'How to use',
+      guideClose: 'Close guide',
+      guideStep1: '<b>Paste your accounts</b> into the box below, one per line, in the form <code>email|password|secret</code>. Paste as many lines as you like.',
+      guideStep2: '<b>Press "Generate"</b> to see codes right away, or <b>"Save to list"</b> to keep them for next time.',
+      guideStep3: '<b>Click the digits</b> to copy the code. Click the email, the secret line or the 🔑 line to copy the email / secret / password.',
+      guideStep4: '<b>The ring</b> shows the time left. Codes rotate every 30 seconds; under 5 seconds the ring turns amber, and the <b>next code</b> is already displayed on the right.',
+      guideStep5: 'In <b>Settings ⚙</b>: turn on a <b>master password</b> to encrypt your data, adjust the <b>clock offset</b> if codes are always rejected, and <b>export a backup</b> from the saved list.',
+      guideRiskTitle: '⚠ Risks to understand first',
+      guideRisk1: '<b>Your data stays on this device only.</b> There is no server and nothing is sent anywhere. A different machine, a different browser, or a private window means an empty list — no sync, no cloud recovery.',
+      guideRisk2: '<b>Clearing site data deletes everything.</b> Clearing browsing data or reinstalling the browser wipes the list. <b>Export a <code>.json</code> backup right after saving accounts.</b>',
+      guideRisk3: '<b>Do not use this on a public or shared computer.</b> Secrets stay behind in that browser. If you must, wipe all data before you leave.',
+      guideRisk4: '<b>Without a master password, secrets are plaintext.</b> Anyone who can open this browser, and any extension allowed to read the page, can retrieve them.',
+      guideRisk5: '<b>This is a website; the code is downloaded each visit.</b> You are trusting whoever operates it. For valuable accounts, download the files and open <code>index.html</code> locally — then you depend on nobody.',
+      guideRisk6: '<b>Do not use a web tool for critical accounts.</b> Banking, primary email, crypto wallets — use a phone app such as Aegis, Ente Auth or 2FAS.',
+
+      inputHeading: 'Add accounts',
+      formatHelpBtn: 'Supported formats?',
+      inputPlaceholder: 'email|password|secret\nOne account per line. Example:\nabc@icloud.com|Password123|DQSJC355NQ7BMDODVYIOXVJJYX56Z7AM',
+      fmt1: '<code>email|password|secret</code> — full form (passwords containing <code>|</code> are handled correctly)',
+      fmt2: '<code>email|secret</code>',
+      fmt3: '<code>secret</code> — just the Base32 key',
+      fmt4: '<code>otpauth://totp/...</code> — standard URI, digits/period/algorithm read automatically',
+      btnGenerate: 'Generate',
+      btnSaveAll: 'Save to list',
+      btnClearInput: 'Clear input',
+      saveGroupLabel: 'Save into group',
+      saveGroupPlaceholder: '(no group)',
+
+      vaultHeading: 'Saved accounts',
+      searchPlaceholder: 'Search email / label…',
+      btnSelect: 'Select',
+      btnSelectDone: 'Done',
+      btnExportJson: 'Export .json',
+      btnExportTxt: 'Export .txt',
+      btnImport: 'Import file',
+      groupWord: 'Group',
+      btnGroupRename: 'Rename group',
+      btnGroupDelete: 'Delete group',
+      bulkSelected: 'Selected',
+      bulkGroupPlaceholder: 'Group name…',
+      btnBulkAssign: 'Move to group',
+      btnBulkUngroup: 'Remove from group',
+      btnBulkSelectAll: 'Select all shown',
+      btnBulkClear: 'Clear selection',
+      btnBulkDelete: 'Delete selected',
+
+      chipAll: 'All',
+      chipUngrouped: 'Ungrouped',
+      emptyDefault: 'No accounts yet. Paste into the box above, then press <b>Save to list</b>.',
+      emptyNoneIn: 'No accounts{where}.',
+      emptyNoMatch: 'No accounts match "{q}"{where}.',
+      whereUngrouped: ' in Ungrouped',
+      whereGroup: ' in group "{g}"',
+
+      cardCopyCode: 'Click to copy',
+      cardCopyLabel: 'Click to copy email / label',
+      cardCopySecret: 'Click to copy secret',
+      cardCopyPassword: 'Click to copy password',
+      cardDrag: 'Drag to reorder',
+      cardEdit: 'Edit',
+      cardDelete: 'Delete',
+      cardSave: 'Save to list',
+      cardNext: 'next',
+      noName: 'Untitled',
+
+      supportHeading: 'Support',
+      supportText: 'This tool is free, ad-free and collects nothing. If you find it useful, you can buy me a coffee.',
+      supportNote: 'Scan with your banking app.',
+      qrAlt: 'QR code for supporting the author by bank transfer',
+      credit: 'Built by <b>Tống Huỳnh Hồng Phúc</b>',
+
+      lockHeading: 'Vault locked',
+      lockSub: 'Enter your master password to decrypt.',
+      lockPwPlaceholder: 'Master password',
+      btnUnlock: 'Unlock',
+      btnForgot: 'Forgot your password?',
+      btnLockWipe: 'Wipe all data and start over',
+
+      editTitle: 'Edit account',
+      fLabel: 'Email / label',
+      fPassword: 'Password',
+      fSecret: 'Secret key (Base32)',
+      fGroup: 'Group',
+      fNote: 'Note',
+      optional: '(optional)',
+      groupHint: '(leave empty = ungrouped)',
+      fDigits: 'Digits',
+      fPeriod: 'Period (seconds)',
+      fAlgorithm: 'Algorithm',
+      btnCancel: 'Cancel',
+      btnSave: 'Save',
+      errBadSecret: 'Invalid secret key (A–Z and 2–7 only, at least 8 characters).',
+
+      pwTitleEnable: 'Enable encryption',
+      pwTitleChange: 'Change master password',
+      pwIntroEnable: 'All secret keys will be encrypted with AES-256-GCM before being written to the browser.',
+      pwIntroChange: 'Your list will be re-encrypted with the new password.',
+      pwNew: 'New password',
+      pwConfirm: 'Repeat',
+      pwWarn: 'There is no recovery. Forgetting this password means losing the entire list — export a backup before enabling it.',
+      btnConfirm: 'Confirm',
+      pwErrShort: 'Password must be at least 8 characters.',
+      pwErrMismatch: 'The two passwords do not match.',
+
+      settingsHeading: 'Settings',
+      sReveal: 'Show secret keys in the list',
+      sShowPw: 'Show passwords in the list',
+      sOffset: 'Clock offset (seconds)',
+      offsetHint: 'Offline machines often drift. If codes are always rejected, adjust this (+ or −) and try again. Current clock:',
+      mkHeading: 'Master password',
+      btnEncEnable: 'Enable encryption',
+      btnEncChange: 'Change password',
+      btnEncDisable: 'Disable encryption',
+      autoLockLabel: 'Auto-lock after',
+      autoLock0: 'Never auto-lock',
+      autoLock1: '1 minute idle',
+      autoLockN: '{n} minutes idle',
+      btnWipe: 'Wipe all data',
+      btnClose: 'Close',
+      langLabel: 'Language',
+
+      busyDefault: 'Working…',
+      busyDerive: 'Deriving key (~1 second)…',
+      busyDecrypt: 'Decrypting (~1 second)…',
+
+      toastCopied: 'Copied {what}: {value}',
+      whatCode: 'code', whatEmail: 'email', whatSecret: 'secret', whatPassword: 'password',
+      toastCopyBlocked: 'The browser blocked copying — select the text and press Ctrl+C',
+      toastNoStorage: 'Could not write to localStorage (private mode?)',
+      toastEncryptFail: 'Encryption failed while saving: {msg}',
+      toastGenerated: 'Generated codes for {n} accounts',
+      toastNothingToGen: 'Nothing to generate yet',
+      toastDupSecret: 'That secret is already saved ({label})',
+      toastSavedOne: 'Saved {label}',
+      toastNoValidLine: 'No valid lines to save',
+      toastSavedMany: 'Saved {n} accounts',
+      toastIntoGroup: ' into group "{g}"',
+      toastSkippedDup: ' ({n} duplicates skipped)',
+      toastDeleted: 'Deleted',
+      toastUpdated: 'Updated',
+      toastOrderSaved: 'New order saved',
+      toastClearFilterFirst: 'Go back to "All" and clear the search box before reordering',
+      toastImported: 'Imported {n} accounts',
+      toastBadJson: 'Corrupt JSON file',
+      toastLinesSkipped: '{n} lines skipped',
+      toastEmptyList: 'The list is empty',
+      toastBackupWarn: 'The backup file holds secrets in plaintext — keep it safe',
+      toastEncOn: 'Encryption enabled. Do not forget this password.',
+      toastEncOff: 'Encryption disabled',
+      toastPwChanged: 'Password changed',
+      toastEncFail: 'Could not enable encryption: {msg}',
+      toastPwChangeFail: 'Could not change password: {msg}',
+      toastUnlocked: 'Unlocked — {n} accounts',
+      toastAutoLocked: 'Auto-locked after {n} minutes idle',
+      toastAutoLocked1: 'Auto-locked after 1 minute idle',
+      toastWiped: 'All data wiped',
+      toastNeedGroupName: 'Enter a group name first',
+      toastBulkAssigned: 'Moved {n} accounts into group "{g}"',
+      toastBulkUngrouped: 'Removed {n} accounts from their group',
+      toastBulkDeleted: 'Deleted {n} accounts',
+      toastGroupEmptyName: 'Group name cannot be empty',
+      toastGroupMerged: 'Merged {n} accounts → "{g}"',
+      toastGroupRenamed: 'Group renamed, {n} accounts → "{g}"',
+      toastGroupDeleted: 'Group "{g}" deleted, {n} accounts moved to Ungrouped',
+
+      confirmDeleteOne: 'Remove "{label}" from the list?',
+      confirmBulkDelete: 'Delete {n} selected accounts? This cannot be undone.',
+      confirmWipe1: 'Delete ALL saved accounts? This cannot be undone.',
+      confirmWipe2: 'Are you sure? Export a backup first if you need one.',
+      confirmLockWipe1: 'WIPE ALL DATA?\n\nThe encrypted list will be permanently deleted. If you do NOT have a .json/.txt backup exported earlier, every secret key will be lost and cannot be recovered.',
+      confirmLockWipe2: 'Final confirmation: wipe everything and start over?',
+      confirmEncOff: 'Disable encryption? Secret keys will return to plaintext in localStorage, readable by anyone who opens this browser.',
+      confirmGroupMerge: 'Group "{g}" already exists. Merge "{old}" into it?',
+      confirmGroupDelete: 'Delete group "{g}"?\n\nThe {n} accounts in it will NOT be deleted; they move to "Ungrouped".',
+      promptRename: 'New name for group "{g}":',
+      alertForgot: 'There is no recovery.\n\nThe encryption key is derived directly from the password you type and is stored nowhere — not on your device, not on any server. Nobody can unlock it for you, including whoever made this page.\n\nIF you have a .json/.txt backup exported earlier:\nPress "Wipe all data and start over" below, then use "Import file" to restore.\n\nIF you do not:\nThe secret keys are gone for good. You will need to sign in to each service (Google, Facebook…) using a backup code or email, then set up 2FA again to obtain new secrets.',
+
+      lockErrWrongPw: 'Wrong password.',
+      lockErrNoCrypto: 'The vault is encrypted but this browser withholds Web Crypto here. Open the page over http://localhost.',
+      cryptoUnavailable: 'Web Crypto is unavailable here (usually because the page was opened via file://). Serve it over http://localhost to use encryption.',
+      encStatusUnavailable: 'Unavailable — {msg}',
+      encStatusOn: 'ON. The vault is encrypted with AES-256-GCM, key derived with PBKDF2-SHA256 at {n} iterations.',
+      encStatusOff: 'OFF. Secret keys sit in localStorage as plaintext.',
+      footSecOn: '<b>Security:</b> the vault is encrypted with your master password. Exported backups are still plaintext — keep them safe.',
+      footSecOff: '<b>Security note:</b> secret keys are stored as plaintext in this browser\'s <code>localStorage</code>. Turn on a <b>master password</b> in Settings to encrypt them.',
+      cryptoNoteOk: 'Using the browser\'s Web Crypto. This page makes no outbound requests.',
+      cryptoNoteFallback: 'Web Crypto is unavailable (usually via file://) — using the pure-JS HMAC fallback. SHA-1/SHA-256 remain correct; SHA-512 and vault encryption need http://localhost.',
+      parseErrHeading: '{n} lines could not be read:',
+      errAlgoNeedsCrypto: '{algo} requires Web Crypto. Serve the page over http://localhost instead of opening the file directly.',
+      errGenerate: 'Code generation failed'
+    }
+  };
+
+  var current = 'vi';
+
+  function t(key, params) {
+    var s = (DICT[current] && DICT[current][key]);
+    if (s == null) s = DICT.vi[key];
+    if (s == null) return key;
+    if (!params) return s;
+    return s.replace(/\{(\w+)\}/g, function (m, name) {
+      return Object.prototype.hasOwnProperty.call(params, name) ? params[name] : m;
+    });
+  }
+
+  function setLang(lang) {
+    current = DICT[lang] ? lang : 'vi';
+    apply();
+  }
+
+  function getLang() { return current; }
+
+  // Ngôn ngữ mặc định cho người mới: theo trình duyệt, còn lại rơi về tiếng Việt.
+  function detect() {
+    var nav = (global.navigator.languages && global.navigator.languages[0]) ||
+              global.navigator.language || 'vi';
+    return /^vi/i.test(nav) ? 'vi' : 'en';
+  }
+
+  // Áp chuỗi tĩnh vào DOM.
+  //   data-i18n       -> textContent
+  //   data-i18n-html  -> innerHTML (dùng cho chuỗi có <b>, <code>)
+  //   data-i18n-attr  -> "placeholder:key;title:key;aria-label:key"
+  function apply(root) {
+    var scope = root || global.document;
+
+    scope.querySelectorAll('[data-i18n]').forEach(function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+
+    scope.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+      el.innerHTML = t(el.getAttribute('data-i18n-html'));
+    });
+
+    scope.querySelectorAll('[data-i18n-attr]').forEach(function (el) {
+      el.getAttribute('data-i18n-attr').split(';').forEach(function (pair) {
+        var bits = pair.split(':');
+        if (bits.length !== 2) return;
+        el.setAttribute(bits[0].trim(), t(bits[1].trim()));
+      });
+    });
+
+    global.document.documentElement.setAttribute('lang', t('htmlLang'));
+    global.document.title = t('docTitle');
+  }
+
+  global.I18N = { t: t, setLang: setLang, getLang: getLang, detect: detect, apply: apply };
+})(window);

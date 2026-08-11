@@ -16,7 +16,8 @@
     revealSecrets: false,
     showPasswords: false,
     autoLockMinutes: 5,   // 0 = không tự khoá
-    guideDismissed: false // người mới vào thấy hướng dẫn mở sẵn
+    guideDismissed: false,// người mới vào thấy hướng dẫn mở sẵn
+    lang: ''              // '' = chưa chọn, sẽ dò theo ngôn ngữ trình duyệt
   };
 
   function assign(target) {
@@ -42,7 +43,9 @@
   function sanitize(acc) {
     return {
       id: acc.id || newId(),
-      label: String(acc.label || 'Không tên'),
+      // Để rỗng chứ không nhét chuỗi mặc định: nhãn "chưa đặt tên" là việc của
+      // tầng hiển thị, nếu ghi cứng vào dữ liệu thì đổi ngôn ngữ sẽ không đổi được.
+      label: String(acc.label || ''),
       password: String(acc.password || ''),
       secret: String(acc.secret || ''),
       issuer: String(acc.issuer || ''),
