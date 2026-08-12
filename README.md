@@ -1,6 +1,21 @@
-# 2FA Offline
+<div align="center">
+
+# 🔐 2FA Offline
+
+**TOTP codes generated entirely in your browser — no ads, no server, no network requests**
+
+[![Live demo](https://img.shields.io/badge/demo-totp.io.vn-2ea44f?style=flat-square&logo=vercel&logoColor=white)](https://totp.io.vn)
+[![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)](#project-layout)
+[![Build step](https://img.shields.io/badge/build%20step-none-brightgreen?style=flat-square)](#running-it)
+[![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](#project-layout)
+[![PWA](https://img.shields.io/badge/PWA-offline%20ready-5A0FC8?style=flat-square)](#offline-behaviour)
+[![RFC 6238](https://img.shields.io/badge/RFC%206238-verified-success?style=flat-square)](#totp)
+[![Vault](https://img.shields.io/badge/AES--256--GCM-encrypted%20vault-informational?style=flat-square)](#vault-encryption)
 
 ***English** · [Tiếng Việt](README.vi.md)*
+
+</div>
 
 A TOTP generator (compatible with Google Authenticator / Authy) that runs **entirely in
 the browser**. No ads, no server, no network requests — enforced by the browser, not

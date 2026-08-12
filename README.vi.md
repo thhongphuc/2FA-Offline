@@ -1,6 +1,21 @@
-# 2FA Offline
+<div align="center">
+
+# 🔐 2FA Offline
+
+**Sinh mã TOTP hoàn toàn trong trình duyệt — không quảng cáo, không server, không gửi gì ra ngoài**
+
+[![Dùng thử](https://img.shields.io/badge/d%C3%B9ng%20th%E1%BB%AD-totp.io.vn-2ea44f?style=flat-square&logo=vercel&logoColor=white)](https://totp.io.vn)
+[![Giấy phép](https://img.shields.io/badge/gi%E1%BA%A5y%20ph%C3%A9p-MIT-yellow?style=flat-square)](LICENSE)
+[![Dependency](https://img.shields.io/badge/dependency-0-brightgreen?style=flat-square)](#cấu-trúc)
+[![Build](https://img.shields.io/badge/b%C6%B0%E1%BB%9Bc%20build-kh%C3%B4ng-brightgreen?style=flat-square)](#chạy-thế-nào)
+[![JavaScript](https://img.shields.io/badge/JavaScript-thu%E1%BA%A7n-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](#cấu-trúc)
+[![PWA](https://img.shields.io/badge/PWA-ch%E1%BA%A1y%20offline-5A0FC8?style=flat-square)](#chạy-offline)
+[![RFC 6238](https://img.shields.io/badge/RFC%206238-%C4%91%C3%A3%20%C4%91%E1%BB%91i%20chi%E1%BA%BFu-success?style=flat-square)](#về-web-crypto)
+[![Vault](https://img.shields.io/badge/AES--256--GCM-m%C3%A3%20ho%C3%A1%20vault-informational?style=flat-square)](#mật-khẩu-chính-mã-hoá-vault)
 
 *[English](README.md) · **Tiếng Việt***
+
+</div>
 
 Sinh mã TOTP (Google Authenticator / Authy compatible) chạy **hoàn toàn tại trình duyệt**.
 Không quảng cáo, không server, không gửi bất kỳ request nào ra ngoài.
