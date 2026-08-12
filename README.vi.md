@@ -5,6 +5,7 @@
 **Sinh mã TOTP hoàn toàn trong trình duyệt — không quảng cáo, không server, không gửi gì ra ngoài**
 
 [![Dùng thử](https://img.shields.io/badge/d%C3%B9ng%20th%E1%BB%AD-totp.io.vn-2ea44f?style=flat-square&logo=vercel&logoColor=white)](https://totp.io.vn)
+[![Sao](https://img.shields.io/github/stars/thhongphuc/2FA-Offline?style=flat-square&logo=github&logoColor=white&color=blue)](https://github.com/thhongphuc/2FA-Offline/stargazers)
 [![Giấy phép](https://img.shields.io/badge/gi%E1%BA%A5y%20ph%C3%A9p-MIT-yellow?style=flat-square)](LICENSE)
 [![Dependency](https://img.shields.io/badge/dependency-0-brightgreen?style=flat-square)](#cấu-trúc)
 [![Build](https://img.shields.io/badge/b%C6%B0%E1%BB%9Bc%20build-kh%C3%B4ng-brightgreen?style=flat-square)](#chạy-thế-nào)
