@@ -40,6 +40,11 @@
    .foo[hidden] mỗi lần tạo component mới. */
 [hidden] { display: none !important; }
 
+/* Cùng cái bẫy đó với <dialog>: quy tắc dialog:not([open]){display:none} cũng là
+   UA style, nên bất kỳ khai báo display nào ta đặt lên dialog (ví dụ display:flex
+   để dựng layout modal) sẽ khiến dialog hiện thường trực ngay cả khi đã đóng. */
+dialog:not([open]) { display: none !important; }
+
 html, body { margin: 0; padding: 0; }
 
 body {
@@ -202,13 +207,16 @@ input[type="search"] { width: 190px; }
   width: min(620px, calc(100vw - 32px));
   max-height: min(86vh, 780px);
   padding: 0;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
-/* Dialog chỉ được vẽ khi có [open], nên animation ở đây tự chạy đúng lúc mở —
-   không cần @starting-style, chạy được trên mọi trình duyệt có <dialog>. */
-.modal[open] { animation: modalIn .34s var(--spring) both; }
+/* display CHỈ đặt ở trạng thái mở — xem chú thích dialog:not([open]) ở đầu file. */
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+  /* Dialog chỉ được vẽ khi có [open], nên animation tự chạy đúng lúc mở —
+     không cần @starting-style, chạy được trên mọi trình duyệt có <dialog>. */
+  animation: modalIn .34s var(--spring) both;
+}
 .modal[open]::backdrop { animation: backdropIn .3s ease both; }
 .modal.closing { animation: modalOut .18s ease-in both; }
 .modal.closing::backdrop { animation: backdropOut .18s ease-in both; }
