@@ -5,7 +5,7 @@
 **TOTP codes generated entirely in your browser — no ads, no server, no network requests**
 
 [![Live demo](https://img.shields.io/badge/demo-totp.io.vn-2ea44f?style=flat-square&logo=vercel&logoColor=white)](https://totp.io.vn)
-[![Stars](https://img.shields.io/github/stars/thhongphuc/2FA-Offline?style=flat-square&logo=github&logoColor=white&color=blue)](https://github.com/thhongphuc/2FA-Offline/stargazers)
+[![Stars](https://img.shields.io/github/stars/thhongphuc/2FA-Offline?style=flat-square&logo=github&logoColor=white&color=blue)](https://github.com/thhongphuc/2FA-Offline)
 [![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)](#project-layout)
 [![Build step](https://img.shields.io/badge/build%20step-none-brightgreen?style=flat-square)](#running-it)
