@@ -1,0 +1,52 @@
+:root {
+  color-scheme: dark;
+  --bg: hsl(225 25% 9%);
+  --panel: hsl(225 22% 13%);
+  --text: hsl(220 20% 90%);
+  --muted: hsl(220 12% 60%);
+  --pass: hsl(150 60% 50%);
+  --fail: hsl(355 80% 62%);
+  --skip: hsl(40 90% 60%);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main { max-width: 860px; margin: 0 auto; padding: 32px 20px 60px; }
+
+h1 { font-size: 22px; margin: 0 0 8px; }
+
+.summary { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+.summary.pass { color: var(--pass); }
+.summary.fail { color: var(--fail); }
+.env { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
+
+.results { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+.results li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border-left: 3px solid var(--muted);
+  border-radius: 8px;
+}
+
+.results li::before { font-weight: 700; margin-right: 10px; }
+.results li.pass { border-left-color: var(--pass); }
+.results li.pass::before { content: "✓"; color: var(--pass); }
+.results li.fail { border-left-color: var(--fail); flex-wrap: wrap; }
+.results li.fail::before { content: "✗"; color: var(--fail); }
+.results li.skip { border-left-color: var(--skip); }
+.results li.skip::before { content: "–"; color: var(--skip); }
+
+.results li span { flex: 1; }
+.results small { color: var(--muted); white-space: nowrap; }
+.results li.fail small { color: var(--fail); white-space: normal; flex-basis: 100%; }

@@ -60,10 +60,18 @@
     };
   }
 
+  // kdf có thể đến từ file backup người khác đưa cho, nên chặn cả hai đầu:
+  // quá ít vòng thì yếu, quá nhiều vòng thì treo trình duyệt.
+  var MAX_ITERATIONS = 10000000;
+
   function deriveFromParams(password, kdf) {
-    var iterations = parseInt(kdf && kdf.iterations, 10);
-    if (!iterations || iterations < 1000) return Promise.reject(new Error('Tham số KDF không hợp lệ'));
-    return deriveKey(password, fromB64(kdf.salt), iterations);
+    return Promise.resolve().then(function () {
+      var iterations = parseInt(kdf && kdf.iterations, 10);
+      if (!iterations || iterations < 1000 || iterations > MAX_ITERATIONS) {
+        throw new Error('Tham số KDF không hợp lệ');
+      }
+      return deriveKey(password, fromB64(kdf.salt), iterations);
+    });
   }
 
   // IV mới cho MỖI lần ghi. Dùng lại IV với cùng khoá sẽ phá vỡ AES-GCM.
@@ -82,6 +90,56 @@
       .then(function (buf) { return new TextDecoder().decode(buf); });
   }
 
+  // Niêm phong một chuỗi bằng mật khẩu: salt mới + IV mới mỗi lần.
+  // kdf truyền vào chỉ để test chạy nhanh với ít vòng; bình thường để trống.
+  function seal(password, plaintext, kdf) {
+    kdf = kdf || newKdfParams();
+    return deriveFromParams(password, kdf).then(function (key) {
+      return encrypt(key, plaintext);
+    }).then(function (res) {
+      return { kdf: kdf, iv: res.iv, ciphertext: res.ciphertext };
+    });
+  }
+
+  // Sai mật khẩu -> AES-GCM tự ném lỗi khi xác thực tag.
+  function open(password, sealed) {
+    return deriveFromParams(password, sealed.kdf).then(function (key) {
+      return decrypt(key, sealed.iv, sealed.ciphertext);
+    });
+  }
+
+  /* ---- File backup mã hoá ---- */
+
+  var BACKUP_FORMAT = '2fa-offline-backup';
+
+  function isEncryptedBackup(data) {
+    return !!(data && data.format === BACKUP_FORMAT && data.encrypted &&
+      data.kdf && typeof data.iv === 'string' && typeof data.ciphertext === 'string');
+  }
+
+  function sealBackup(password, accounts, kdf) {
+    var payload = JSON.stringify({ accounts: accounts });
+    return seal(password, payload, kdf).then(function (s) {
+      return {
+        format: BACKUP_FORMAT,
+        version: 1,
+        encrypted: true,
+        exportedAt: new Date().toISOString(),
+        kdf: s.kdf,
+        iv: s.iv,
+        ciphertext: s.ciphertext
+      };
+    });
+  }
+
+  // Trả về mảng tài khoản thô (chưa sanitize).
+  function openBackup(password, data) {
+    return open(password, data).then(function (json) {
+      var parsed = JSON.parse(json);
+      return Array.isArray(parsed.accounts) ? parsed.accounts : [];
+    });
+  }
+
   global.VaultCrypto = {
     ITERATIONS: ITERATIONS,
     available: available,
@@ -89,6 +147,11 @@
     deriveFromParams: deriveFromParams,
     encrypt: encrypt,
     decrypt: decrypt,
+    seal: seal,
+    open: open,
+    isEncryptedBackup: isEncryptedBackup,
+    sealBackup: sealBackup,
+    openBackup: openBackup,
     toB64: toB64,
     fromB64: fromB64
   };

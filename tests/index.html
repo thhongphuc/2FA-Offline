@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'">
+<title>2FA Offline — Kiểm thử</title>
+<link rel="stylesheet" href="test.css">
+</head>
+<body>
+<main>
+  <h1>2FA Offline — Kiểm thử</h1>
+  <p id="summary" class="summary">Đang chạy…</p>
+  <p id="env" class="env"></p>
+  <ol id="results" class="results"></ol>
+</main>
+
+<!-- Nạp nguyên văn module của app, cùng thứ tự như index.html. -->
+<script src="../js/base32.js"></script>
+<script src="../js/sha.js"></script>
+<script src="../js/totp.js"></script>
+<script src="../js/parser.js"></script>
+<script src="../js/crypto.js"></script>
+<script src="../js/storage.js"></script>
+<script src="tests.js"></script>
+<script src="runner-browser.js"></script>
+</body>
+</html>

@@ -130,7 +130,10 @@ Secrets are case-insensitive; whitespace and `=` padding are stripped.
 - Configurable `digits` (6/7/8), `period`, and algorithm (SHA-1/256/512)
 - Optional **master password** with lock screen and idle auto-lock
 - Click to copy code, email, secret or password
-- `.json` and `.txt` export/import
+- `.json` and `.txt` export/import, plus **encrypted `.json` backups** (AES-256-GCM,
+  separate password per file)
+- Safe to keep open in **several tabs** — changes made in one tab appear in the others
+  instead of being silently overwritten
 - Secrets and passwords masked by default
 - Manual clock offset, for offline machines whose time has drifted
 - **Bilingual (English / Tiếng Việt)** — follows the browser language on first
@@ -165,6 +168,33 @@ deterministically from the group name by hash — deliberately not stored, becau
 map in `settings` would leave group names readable in plaintext even with the vault
 encrypted.
 
+### Encrypted backups
+
+**Export encrypted .json** wraps the full backup in the same AES-256-GCM + PBKDF2
+(600,000 iterations) construction the vault uses, under a password chosen at export time.
+It is deliberately separate from the master password, so a file stored in the cloud does
+not reveal the key to the vault. **Import file** recognises the format
+(`"format": "2fa-offline-backup"`) and asks for the password. Because KDF parameters now
+come from a file someone may hand you, iterations outside 1,000–10,000,000 are rejected
+rather than allowed to stall the browser.
+
+### Several tabs
+
+Each tab holds the account list in memory and rewrites the whole record on save, so
+without coordination the tab that saved last would erase the other's changes. The app
+listens for the `storage` event and reloads (or re-decrypts with the in-memory key) when
+another tab writes. If another tab enables encryption or changes the master password, the
+key this tab holds is no longer valid, so it locks and asks for the current password.
+
+### Import validation
+
+Imported files may come from anywhere. Every entry must carry a valid Base32 secret;
+`digits` is clamped to 6–8, `period` to 1–300 s, and unknown algorithms fall back to
+SHA-1. The result toast reports how many entries were added, skipped as duplicates and
+rejected as invalid. After the first account is saved the app also calls
+`navigator.storage.persist()`, so the browser does not evict the data when disk space runs
+low; the outcome is shown in Settings.
+
 ## Project layout
 
 ```
@@ -178,7 +208,21 @@ js/crypto.js             AES-GCM + PBKDF2 vault encryption
 js/storage.js            localStorage read/write
 js/app.js                rendering, timers, copy, groups, import/export
 sw.js                    service worker (stale-while-revalidate)
+tests/                   zero-dependency test suite (not deployed)
 ```
+
+## Tests
+
+```bash
+node tests/run-node.mjs          # Node 20+
+```
+
+or open `http://localhost:8791/tests/` in a browser. The suite loads the real `js/*.js`
+files unchanged and covers every RFC 6238 test vector (SHA-1/256/512), RFC 2202 / 4231
+HMAC vectors for the pure-JS fallback, a randomised comparison of the fallback against Web
+Crypto, RFC 4648 Base32, the parser, input sanitising, and vault/backup encryption
+(round-trip, wrong password, tampered ciphertext, hostile KDF parameters). The Node runner
+also checks that every file listed in `ASSETS` in `sw.js` exists.
 
 ## Security limitations
 
@@ -189,7 +233,8 @@ access to the browser profile, and any extension with permission to read the pag
 retrieve them.
 
 **With a master password**, encryption protects data at rest only. While the vault is
-unlocked the secrets are in memory and in the DOM. Exported backups are always plaintext.
+unlocked the secrets are in memory and in the DOM. Plain `.json`/`.txt` exports are
+plaintext — use the encrypted export for any file that leaves the machine.
 Encryption does nothing against a keylogger or a malicious extension running alongside.
 
 **If you host this publicly, you become a trusted party.** The browser re-downloads the

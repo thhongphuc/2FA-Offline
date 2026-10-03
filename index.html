@@ -89,6 +89,8 @@
         <button class="btn btn-sm" id="btnSelectMode" type="button"></button>
         <button class="btn btn-sm" id="btnExportJson" type="button"
                 data-i18n="btnExportJson" data-i18n-attr="title:exportJsonTitle"></button>
+        <button class="btn btn-sm" id="btnExportEnc" type="button"
+                data-i18n="btnExportEnc" data-i18n-attr="title:exportEncTitle"></button>
         <button class="btn btn-sm" id="btnExportTxt" type="button"
                 data-i18n="btnExportTxt" data-i18n-attr="title:exportTxtTitle"></button>
         <button class="btn btn-sm" id="btnImport" type="button" data-i18n="btnImport"></button>
@@ -156,6 +158,7 @@
     <h4 class="guide-sec-title" data-i18n="guideExportTitle"></h4>
     <ul class="guide-notes">
       <li data-i18n-html="guideExportJson"></li>
+      <li data-i18n-html="guideExportEnc"></li>
       <li data-i18n-html="guideExportTxt"></li>
     </ul>
     <p class="guide-aside" data-i18n-html="guideExportWhy"></p>
@@ -255,11 +258,27 @@
     <label><span data-i18n="pwConfirm"></span>
       <input type="password" id="pwConfirm" autocomplete="new-password">
     </label>
-    <p class="warn-box" data-i18n="pwWarn"></p>
+    <p class="warn-box" id="pwWarn" data-i18n="pwWarn"></p>
     <p class="dlg-error" id="pwError" hidden></p>
     <div class="dlg-actions">
       <button class="btn btn-ghost" type="button" id="btnPwCancel" data-i18n="btnCancel"></button>
       <button class="btn btn-primary" id="btnPwOk" type="submit" data-i18n="btnConfirm"></button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ Dialog: mở file backup mã hoá ============ -->
+<dialog id="backupPwDialog" class="dlg">
+  <form id="bpForm" autocomplete="off">
+    <h3 data-i18n="bpHeading"></h3>
+    <p class="muted small" data-i18n="bpIntro"></p>
+    <label><span data-i18n="bpPwLabel"></span>
+      <input type="password" id="bpPw" autocomplete="off">
+    </label>
+    <p class="dlg-error" id="bpError" hidden></p>
+    <div class="dlg-actions">
+      <button class="btn btn-ghost" type="button" id="btnBpCancel" data-i18n="btnCancel"></button>
+      <button class="btn btn-primary" id="btnBpOk" type="submit" data-i18n="btnDecrypt"></button>
     </div>
   </form>
 </dialog>
@@ -306,6 +325,8 @@
         </select>
       </label>
     </div>
+
+    <p class="muted small" id="persistStatus"></p>
 
     <div class="danger-zone">
       <button class="btn btn-danger btn-sm" id="btnWipe" type="button" data-i18n="btnWipe"></button>

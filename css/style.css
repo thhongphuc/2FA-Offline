@@ -530,64 +530,126 @@ input[type="search"] { width: 190px; }
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   max-width: 100%;
+  transition: transform .15s var(--spring, ease), background-color .2s, border-color .2s,
+              color .2s, box-shadow .2s;
 }
-.chip:hover { border-color: var(--text-mute); color: var(--text); }
+.chip:hover { border-color: var(--text-mute); color: var(--text); transform: translateY(-1px); }
+.chip:active { transform: translateY(0) scale(.97); }
 .chip[aria-pressed="true"] {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip-count {
   font-family: var(--mono);
-  font-size: 11px;
-  opacity: .75;
+  font-size: 10.5px;
+  min-width: 18px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  text-align: center;
+  background: color-mix(in srgb, currentColor 14%, transparent);
 }
 .chip-none { font-style: italic; }
 
-/* Nhãn nhóm trên từng thẻ */
-.acct-group {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: .2px;
-  color: var(--g);
-  background: color-mix(in srgb, var(--g) 13%, transparent);
-  border: 1px solid color-mix(in srgb, var(--g) 32%, transparent);
-  border-radius: 999px;
-  padding: 2px 8px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
 /* Màu nhóm suy ra tất định từ tên (hash -> 1 trong 8 lớp). Không lưu bảng màu
    ở đâu cả: nếu lưu trong settings thì TÊN NHÓM sẽ nằm dạng văn bản thường
-   ngay cả khi vault đã mã hoá — đọc được mà không cần mở khoá. */
-.g0 { --g: #3b82f6; }
-.g1 { --g: #10b981; }
-.g2 { --g: #f59e0b; }
-.g3 { --g: #a855f7; }
-.g4 { --g: #ef4444; }
-.g5 { --g: #06b6d4; }
-.g6 { --g: #ec4899; }
-.g7 { --g: #84cc16; }
+   ngay cả khi vault đã mã hoá — đọc được mà không cần mở khoá.
+
+   Mỗi lớp chỉ khai báo sắc độ (--gh). Độ sáng/bão hoà tính riêng cho từng theme:
+   chữ sáng trên nền tối, chữ đậm trên nền sáng — cùng một màu vàng không thể
+   đọc được trên cả hai. Các sắc độ cách đều nhau để 8 nhóm dễ phân biệt. */
+.g0 { --gh: 221; }   /* xanh dương */
+.g1 { --gh: 158; }   /* ngọc lục bảo */
+.g2 { --gh: 38; }    /* hổ phách */
+.g3 { --gh: 266; }   /* tím */
+.g4 { --gh: 350; }   /* hồng đào */
+.g5 { --gh: 190; }   /* lam ngọc */
+.g6 { --gh: 316; }   /* hồng cánh sen */
+.g7 { --gh: 84; }    /* xanh chanh */
+
+.g0, .g1, .g2, .g3, .g4, .g5, .g6, .g7 {
+  --g: hsl(var(--gh) 92% 74%);            /* chữ */
+  --g-dot: hsl(var(--gh) 90% 62%);        /* chấm màu, vạch thẻ */
+  --g-soft: hsl(var(--gh) 90% 62% / .12); /* nền nhạt */
+  --g-strong: hsl(var(--gh) 90% 62% / .24);
+  --g-line: hsl(var(--gh) 90% 66% / .32); /* viền */
+}
+[data-theme="light"] .g0, [data-theme="light"] .g1, [data-theme="light"] .g2,
+[data-theme="light"] .g3, [data-theme="light"] .g4, [data-theme="light"] .g5,
+[data-theme="light"] .g6, [data-theme="light"] .g7 {
+  --g: hsl(var(--gh) 72% 33%);
+  --g-dot: hsl(var(--gh) 78% 48%);
+  --g-soft: hsl(var(--gh) 85% 50% / .09);
+  --g-strong: hsl(var(--gh) 85% 50% / .18);
+  --g-line: hsl(var(--gh) 70% 45% / .30);
+}
+
+/* Nhãn nhóm trên từng thẻ */
+.acct-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  color: var(--g);
+  background: var(--g-soft);
+  border: 1px solid var(--g-line);
+  border-radius: 999px;
+  padding: 3px 9px 3px 7px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.acct-group-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Chấm màu có quầng sáng nhẹ — dùng chung cho nhãn trên thẻ và chip lọc. */
+.acct-group::before,
+.chip.g0::before, .chip.g1::before, .chip.g2::before, .chip.g3::before,
+.chip.g4::before, .chip.g5::before, .chip.g6::before, .chip.g7::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--g-dot);
+  box-shadow: 0 0 0 2px var(--g-soft), 0 0 8px var(--g-dot);
+}
 
 .chip.g0, .chip.g1, .chip.g2, .chip.g3,
 .chip.g4, .chip.g5, .chip.g6, .chip.g7 {
-  border-color: color-mix(in srgb, var(--g) 40%, transparent);
   color: var(--g);
+  border-color: var(--g-line);
+  background: var(--g-soft);
 }
-.chip[class*="g"]:hover { border-color: var(--g); }
-.chip[aria-pressed="true"][class*="g"] {
-  background: var(--g);
-  border-color: var(--g);
-  color: #fff;
+.chip.g0:hover, .chip.g1:hover, .chip.g2:hover, .chip.g3:hover,
+.chip.g4:hover, .chip.g5:hover, .chip.g6:hover, .chip.g7:hover {
+  color: var(--g);
+  border-color: var(--g-dot);
+  background: var(--g-strong);
+}
+/* Đang chọn: KHÔNG dùng nền đặc + chữ trắng — chữ trắng trên vàng/chanh/lam ngọc
+   gần như không đọc được. Thay bằng nền đậm hơn, viền màu và vòng sáng. */
+.chip[aria-pressed="true"].g0, .chip[aria-pressed="true"].g1,
+.chip[aria-pressed="true"].g2, .chip[aria-pressed="true"].g3,
+.chip[aria-pressed="true"].g4, .chip[aria-pressed="true"].g5,
+.chip[aria-pressed="true"].g6, .chip[aria-pressed="true"].g7 {
+  color: var(--g);
+  background: var(--g-strong);
+  border-color: var(--g-dot);
+  box-shadow: 0 0 0 3px var(--g-soft), 0 4px 16px var(--g-soft);
+}
+
+/* Vạch màu nhóm ở mép trái thẻ: nhìn lướt cũng biết thẻ thuộc nhóm nào. */
+.acct.has-group { box-shadow: inset 3px 0 0 var(--g-dot); }
+.acct.has-group.selected { box-shadow: inset 3px 0 0 var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip, .chip:hover, .chip:active { transition: none; transform: none; }
 }
 
 /* ---------- Quản lý nhóm ---------- */
@@ -841,6 +903,12 @@ input[disabled]:focus, textarea[disabled]:focus { border-color: var(--border); b
   text-align: center;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Hiệu ứng khi kéo file từ ngoài vào cửa sổ để thả */
+body.file-drop-active {
+  outline: 3px dashed var(--accent);
+  outline-offset: -3px;
+}
 
 @media (max-width: 560px) {
   .grid { grid-template-columns: 1fr; }

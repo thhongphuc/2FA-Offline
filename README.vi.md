@@ -120,7 +120,10 @@ Secret không phân biệt hoa thường, tự bỏ khoảng trắng và dấu `
 - Sửa được `digits` (6/7/8), `period`, thuật toán (SHA-1/256/512)
 - **Mã hoá bằng mật khẩu chính** (AES-256-GCM), khoá màn hình, tự khoá khi không dùng
 - Bấm để copy mã / email / secret / mật khẩu
-- Xuất & nhập backup `.json` hoặc `.txt`
+- Xuất & nhập backup `.json` hoặc `.txt`, kèm **backup `.json` mã hoá** (AES-256-GCM,
+  mật khẩu riêng cho từng file)
+- Mở **nhiều tab** cùng lúc vẫn an toàn — thay đổi ở tab này hiện sang tab kia thay vì
+  bị ghi đè âm thầm
 - Che secret và mật khẩu mặc định, bật hiện trong Cài đặt
 - Bù lệch đồng hồ (`timeOffset`) cho máy offline bị sai giờ
 - **Song ngữ Việt / Anh** — lần đầu vào thì theo ngôn ngữ trình duyệt, đổi được
@@ -145,6 +148,31 @@ trong `settings` thì tên nhóm sẽ nằm dạng văn bản thường ngay c�
 
 Nhóm cố ý **không** trở thành trường thứ tư trong `email|password|secret` — quy tắc
 "phần cuối luôn là secret" chính là thứ cho phép mật khẩu chứa ký tự `|`.
+
+## Backup mã hoá
+
+**Xuất .json mã hoá** bọc toàn bộ backup bằng đúng cơ chế vault đang dùng (AES-256-GCM +
+PBKDF2 600.000 vòng), với mật khẩu bạn đặt lúc xuất. Mật khẩu này cố ý tách khỏi mật khẩu
+chính: file để trên đám mây không làm lộ chìa khoá mở vault. **Nhập file** tự nhận ra định
+dạng (`"format": "2fa-offline-backup"`) và hỏi mật khẩu. Vì tham số KDF giờ đến từ file
+người khác có thể đưa cho bạn, số vòng ngoài khoảng 1.000–10.000.000 bị từ chối thay vì
+để treo trình duyệt.
+
+## Nhiều tab
+
+Mỗi tab giữ danh sách trong RAM và ghi lại toàn bộ bản ghi mỗi lần lưu, nên nếu không phối
+hợp thì tab lưu sau sẽ xoá mất thay đổi của tab kia. App lắng nghe sự kiện `storage` và
+nạp lại (hoặc giải mã lại bằng khoá đang có trong RAM) khi tab khác ghi. Nếu tab khác bật
+mã hoá hoặc đổi mật khẩu chính, khoá tab này đang giữ không còn dùng được nữa, nên nó tự
+khoá và hỏi mật khẩu hiện tại.
+
+## Kiểm tra dữ liệu nhập
+
+File nhập có thể đến từ bất cứ đâu. Mỗi mục phải có secret Base32 hợp lệ; `digits` bị kẹp
+về 6–8, `period` về 1–300 giây, thuật toán lạ rơi về SHA-1. Thông báo kết quả cho biết
+bao nhiêu mục được thêm, bị bỏ vì trùng, và bị loại vì không hợp lệ. Sau khi lưu tài
+khoản đầu tiên, app còn gọi `navigator.storage.persist()` để trình duyệt không tự dọn dữ
+liệu khi ổ đĩa đầy; kết quả hiện trong Cài đặt.
 
 ## Song ngữ
 
@@ -228,7 +256,21 @@ js/crypto.js             AES-GCM + PBKDF2 cho vault
 js/storage.js            đọc/ghi localStorage
 js/app.js                render, đồng hồ, copy, nhóm, import/export
 sw.js                    service worker (stale-while-revalidate)
+tests/                   bộ test không dependency (không deploy)
 ```
+
+## Kiểm thử
+
+```bash
+node tests/run-node.mjs          # Node 20+
+```
+
+hoặc mở `http://localhost:8791/tests/` trên trình duyệt. Bộ test nạp nguyên văn các file
+`js/*.js` và phủ: toàn bộ test vector RFC 6238 (SHA-1/256/512), vector HMAC RFC 2202 / 4231
+cho đường JS thuần, so sánh ngẫu nhiên đường JS thuần với Web Crypto, Base32 RFC 4648,
+parser, làm sạch dữ liệu, và mã hoá vault/backup (khứ hồi, sai mật khẩu, ciphertext bị sửa,
+tham số KDF độc hại). Bản chạy bằng Node còn kiểm tra mọi file trong `ASSETS` của `sw.js`
+đều tồn tại.
 
 Không có dependency, không có bước build, không tải gì từ CDN.
 
@@ -251,7 +293,8 @@ và extension có quyền truy cập trang cũng đọc được.
 **Kể cả khi đã bật mật khẩu chính**, vẫn còn những giới hạn cần biết:
 
 - Lúc vault đang mở, secret nằm trong RAM và trong DOM — chỉ được xoá khi khoá lại
-- File backup `.json` / `.txt` xuất ra luôn là văn bản thường
+- File backup `.json` / `.txt` thường là văn bản thường — dùng **Xuất .json mã hoá** cho
+  mọi file mang ra khỏi máy
 - Mã hoá bảo vệ dữ liệu *lúc nằm yên trên đĩa*, không chống được keylogger
   hay extension độc hại đang chạy cùng lúc
 
