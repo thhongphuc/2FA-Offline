@@ -213,7 +213,11 @@
       <input type="text" id="fLabel" autocomplete="off" required>
     </label>
     <label><span data-i18n="fPassword"></span> <span class="muted" data-i18n="optional"></span>
-      <input type="text" id="fPassword" autocomplete="off">
+      <span class="field-reveal">
+        <input type="password" id="fPassword" autocomplete="new-password">
+        <button class="btn btn-sm btn-ghost" id="btnTogglePw" type="button" aria-pressed="false"
+                aria-controls="fPassword" data-i18n="btnShowField"></button>
+      </span>
     </label>
     <label><span data-i18n="fSecret"></span>
       <input type="text" id="fSecret" autocomplete="off" spellcheck="false" required>
@@ -294,6 +298,9 @@
     <label class="check">
       <input type="checkbox" id="sShowPw"> <span data-i18n="sShowPw"></span>
     </label>
+    <label class="check">
+      <input type="checkbox" id="sClearClip"> <span data-i18n="sClearClip"></span>
+    </label>
 
     <label><span data-i18n="langLabel"></span>
       <select id="sLang">
@@ -323,6 +330,9 @@
           <option value="15"></option>
           <option value="60"></option>
         </select>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="sLockOnHide"> <span data-i18n="sLockOnHide"></span>
       </label>
     </div>
 

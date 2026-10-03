@@ -72,15 +72,82 @@
     els.busy.hidden = !on;
   }
 
+  // Secret và mật khẩu không được hiện lại trong toast: người đứng sau lưng sẽ đọc
+  // được dù đã tắt "Hiện secret". Mã OTP và email thì vẫn hiện cho tiện đối chiếu.
+  var HIDE_IN_TOAST = { whatSecret: true, whatPassword: true };
+  var CLEAR_AFTER_COPY = { whatCode: true, whatSecret: true, whatPassword: true };
+
   // navigator.clipboard không có trên file:// ở nhiều trình duyệt -> có đường lui.
+  // Có trường hợp promise của writeText() không bao giờ xong (không resolve, không
+  // reject) -> người dùng bấm mà không thấy gì. Nên chạy đua với một hẹn giờ ngắn,
+  // vẫn còn trong khoảng "vừa tương tác" để execCommand('copy') được phép.
+  var COPY_FALLBACK_MS = 800;
+
   function copy(text, whatKey) {
-    function done() { toast(t('toastCopied', { what: t(whatKey), value: text })); }
+    var settled = false;
+    function done() {
+      toast(HIDE_IN_TOAST[whatKey]
+        ? t('toastCopiedHidden', { what: t(whatKey) })
+        : t('toastCopied', { what: t(whatKey), value: text }));
+      if (CLEAR_AFTER_COPY[whatKey]) scheduleClipboardClear();
+    }
+    function finish(ok) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (ok) done();
+      else legacyCopy(text, done);
+    }
+    var timer = null;
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, function () { legacyCopy(text, done); });
+      timer = setTimeout(function () { finish(false); }, COPY_FALLBACK_MS);
+      navigator.clipboard.writeText(text).then(
+        function () { finish(true); },
+        function () { finish(false); });
     } else {
       legacyCopy(text, done);
     }
   }
+
+  /* ---- Tự xoá clipboard ---- */
+
+  // Trình duyệt chỉ cho ghi clipboard khi trang đang được focus. Nếu hết 30 giây
+  // mà người dùng đang ở cửa sổ khác thì đánh dấu chờ, xoá ngay khi họ quay lại.
+  // Không đọc clipboard để so sánh vì readText() bật hộp xin quyền.
+  var CLIP_CLEAR_MS = 30000;
+  var clipTimer = null;
+  var clipPending = false;
+
+  function scheduleClipboardClear() {
+    clearTimeout(clipTimer);
+    clipTimer = null;
+    clipPending = false;
+    if (!settings.clearClipboard) return;
+    clipTimer = setTimeout(function () {
+      clipTimer = null;
+      clipPending = true;
+      clearClipboardNow();
+    }, CLIP_CLEAR_MS);
+  }
+
+  // Gọi khi khoá: không chờ đủ 30 giây nữa.
+  function flushClipboardClear() {
+    if (!clipTimer && !clipPending) return;
+    clearTimeout(clipTimer);
+    clipTimer = null;
+    clipPending = true;
+    clearClipboardNow();
+  }
+
+  function clearClipboardNow() {
+    if (!clipPending) return;
+    if (!navigator.clipboard || !navigator.clipboard.writeText) { clipPending = false; return; }
+    if (!document.hasFocus()) return;   // chờ sự kiện focus
+    clipPending = false;
+    navigator.clipboard.writeText('').catch(function () { /* bỏ qua */ });
+  }
+
+  window.addEventListener('focus', clearClipboardNow);
 
   function legacyCopy(text, done) {
     var ta = document.createElement('textarea');
@@ -760,6 +827,7 @@
     $('editTitle').textContent = t('editTitle');
     $('fLabel').value = acc.label;
     $('fPassword').value = acc.password || '';
+    setPasswordVisible(false);
     $('fSecret').value = acc.secret;
     $('fGroup').value = acc.group || '';
     $('fNote').value = acc.note || '';
@@ -769,6 +837,20 @@
     $('editError').hidden = true;
     els.editDialog.showModal();
   }
+
+  // Mật khẩu trong dialog sửa mặc định bị che; bấm nút để xem/ẩn.
+  function setPasswordVisible(on) {
+    var btn = $('btnTogglePw');
+    var key = on ? 'btnHideField' : 'btnShowField';
+    $('fPassword').type = on ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.setAttribute('data-i18n', key);   // đổi ngôn ngữ vẫn đúng nhãn
+    btn.textContent = t(key);
+  }
+
+  $('btnTogglePw').addEventListener('click', function () {
+    setPasswordVisible($('fPassword').type === 'password');
+  });
 
   $('editForm').addEventListener('submit', function (ev) {
     if (ev.submitter && ev.submitter.value === 'cancel') return;
@@ -1016,6 +1098,7 @@
     if (els.pwDialog.open) els.pwDialog.close();        // sự kiện close tự resolve(null)
     finishBackupPw(null);
     if (els.guide.open) els.guide.close();
+    flushClipboardClear();
     showLock(message);
     refreshEncUi();
   }
@@ -1076,6 +1159,13 @@
       toast(minutes === 1 ? t('toastAutoLocked1') : t('toastAutoLocked', { n: minutes }));
     }
   }, 5000);
+
+  // Tuỳ chọn: khoá ngay khi tab bị ẩn (chuyển tab, thu nhỏ, khoá màn hình điện thoại).
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'hidden') return;
+    if (!settings.lockOnHide || !enc.enabled || locked || !cryptoKey) return;
+    lockNow();
+  });
 
   /* ---------------- Đồng bộ giữa nhiều tab ---------------- */
 
@@ -1425,6 +1515,8 @@
     if (locked) return;
     $('sReveal').checked = !!settings.revealSecrets;
     $('sShowPw').checked = !!settings.showPasswords;
+    $('sClearClip').checked = !!settings.clearClipboard;
+    $('sLockOnHide').checked = !!settings.lockOnHide;
     $('sOffset').value = settings.timeOffset || 0;
     $('sAutoLock').value = String(settings.autoLockMinutes);
     refreshEncUi();
@@ -1435,13 +1527,16 @@
   function readSettingsForm() {
     settings.revealSecrets = $('sReveal').checked;
     settings.showPasswords = $('sShowPw').checked;
+    settings.clearClipboard = $('sClearClip').checked;
+    settings.lockOnHide = $('sLockOnHide').checked;
+    if (!settings.clearClipboard) { clearTimeout(clipTimer); clipTimer = null; clipPending = false; }
     settings.timeOffset = parseInt($('sOffset').value, 10) || 0;
     settings.autoLockMinutes = parseInt($('sAutoLock').value, 10) || 0;
     persistSettings();
     rebuildCards();
   }
 
-  ['sReveal', 'sShowPw', 'sOffset', 'sAutoLock'].forEach(function (id) {
+  ['sReveal', 'sShowPw', 'sClearClip', 'sLockOnHide', 'sOffset', 'sAutoLock'].forEach(function (id) {
     $(id).addEventListener('change', readSettingsForm);
   });
 

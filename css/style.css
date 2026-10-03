@@ -724,6 +724,9 @@ input[type="search"] { width: 190px; }
 .dlg label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--text-dim); }
 .dlg label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); font-size: 13.5px; }
 .dlg label.check input { width: auto; }
+.field-reveal { display: flex; gap: 6px; align-items: stretch; }
+.field-reveal input { flex: 1; min-width: 0; }
+.field-reveal .btn { flex: none; min-width: 52px; }
 .field-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .dlg-error { color: var(--danger); font-size: 12.5px; margin: 0; }

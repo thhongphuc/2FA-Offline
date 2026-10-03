@@ -16,6 +16,8 @@
     revealSecrets: false,
     showPasswords: false,
     autoLockMinutes: 5,   // 0 = không tự khoá
+    lockOnHide: false,    // khoá ngay khi tab bị ẩn (chỉ có tác dụng khi đã bật mã hoá)
+    clearClipboard: true, // ghi đè clipboard 30 giây sau khi copy mã / secret / mật khẩu
     guideDismissed: false,// người mới vào thấy hướng dẫn mở sẵn
     lang: ''              // '' = chưa chọn, sẽ dò theo ngôn ngữ trình duyệt
   };
