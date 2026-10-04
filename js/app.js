@@ -182,6 +182,7 @@
   // Khi bật mã hoá, mỗi lần ghi phải chạy qua AES-GCM (bất đồng bộ).
   // Xâu chuỗi các lần ghi để hai thao tác liên tiếp không ghi đè lẫn nhau.
   function persist() {
+    Vault.normalizeGroupColors(accounts);
     if (!enc.enabled) {
       if (!Vault.writeRaw({ version: Vault.VERSION, accounts: accounts, settings: settings })) {
         toast(t('toastNoStorage'));
@@ -485,14 +486,53 @@
     return names.sort(function (a, b) { return a.localeCompare(b, 'vi'); });
   }
 
-  // Màu suy ra tất định từ tên nhóm nên không cần lưu bảng màu ở đâu — vừa
-  // không có trạng thái để lệch, vừa không đẩy tên nhóm ra vùng văn bản thường.
-  function groupColorClass(name) {
-    if (!name) return '';
+  // Màu do người dùng chọn (lưu trên tài khoản, mã hoá cùng vault) được ưu tiên.
+  // Chưa chọn thì suy ra tất định từ tên như trước.
+  function autoColorIndex(name) {
     var h = 0;
     for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return 'g' + (h % 8);
+    return h % Vault.GROUP_COLORS;
   }
+
+  function groupColorClass(name) {
+    if (!name) return '';
+    var c = Vault.groupColorIndex(accounts, name);
+    return 'g' + (c >= 0 ? c : autoColorIndex(name));
+  }
+
+  // Đổi nhóm cho một tài khoản: tài khoản nhận màu của nhóm đích, không mang màu
+  // nhóm cũ sang (nếu không, chuyển 1 tài khoản sẽ vô tình tô màu cả nhóm đích).
+  function moveToGroup(acc, g) {
+    if (acc.group === g) return;
+    acc.groupColor = g ? Vault.groupColorIndex(accounts, g) : -1;
+    acc.group = g;
+  }
+
+  function renderGroupColors() {
+    var box = $('gaColors');
+    if (!activeGroup) { box.innerHTML = ''; return; }
+    var current = Vault.groupColorIndex(accounts, activeGroup);
+    var html = '<button type="button" class="swatch swatch-auto" data-color="-1" role="radio" aria-checked="' +
+      (current < 0) + '" title="' + esc(t('colorAuto')) + '" aria-label="' + esc(t('colorAuto')) + '">A</button>';
+    for (var i = 0; i < Vault.GROUP_COLORS; i++) {
+      var label = esc(t('colorN', { n: i + 1 }));
+      html += '<button type="button" class="swatch g' + i + '" data-color="' + i + '" role="radio" aria-checked="' +
+        (current === i) + '" title="' + label + '" aria-label="' + label + '"></button>';
+    }
+    box.innerHTML = html;
+  }
+
+  $('gaColors').addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.swatch');
+    if (!btn || !activeGroup || locked) return;
+    var c = parseInt(btn.getAttribute('data-color'), 10);
+    var g = activeGroup;
+    accounts.forEach(function (a) { if (a.group === g) a.groupColor = c; });
+    persist();
+    rebuildCards();
+    refreshBulkBar();
+    toast(t('toastGroupColor', { g: g }));
+  });
 
   function countIn(group) {
     var n = 0;
@@ -556,6 +596,7 @@
     $('bulkBar').hidden = !selectMode;
     $('groupActions').hidden = selectMode || activeGroup === null || activeGroup === '';
     if (activeGroup) $('gaName').textContent = activeGroup;
+    renderGroupColors();
 
     var n = selectedIds().length;
     $('bulkCount').textContent = n;
@@ -606,12 +647,12 @@
   $('btnBulkAssign').addEventListener('click', function () {
     var g = $('bulkGroup').value.trim();
     if (!g) { toast(t('toastNeedGroupName')); return; }
-    applyToSelected(function (a) { a.group = g; }, 'toastBulkAssigned', { g: g });
+    applyToSelected(function (a) { moveToGroup(a, g); }, 'toastBulkAssigned', { g: g });
     $('bulkGroup').value = '';
   });
 
   $('btnBulkUngroup').addEventListener('click', function () {
-    applyToSelected(function (a) { a.group = ''; }, 'toastBulkUngrouped');
+    applyToSelected(function (a) { moveToGroup(a, ''); }, 'toastBulkUngrouped');
   });
 
   $('btnBulkDelete').addEventListener('click', function () {
@@ -643,8 +684,15 @@
     var merging = groupNames().indexOf(name) !== -1;
     if (merging && !window.confirm(t('confirmGroupMerge', { g: name, old: old }))) return;
 
+    // Gộp vào nhóm đã có màu thì theo màu nhóm đích; đổi tên thuần thì giữ màu.
+    var targetColor = merging ? Vault.groupColorIndex(accounts, name) : -1;
     var n = 0;
-    accounts.forEach(function (a) { if (a.group === old) { a.group = name; n++; } });
+    accounts.forEach(function (a) {
+      if (a.group !== old) return;
+      a.group = name;
+      if (targetColor >= 0) a.groupColor = targetColor;
+      n++;
+    });
     activeGroup = name;
     persist();
     rebuildCards();
@@ -658,7 +706,7 @@
     var n = countIn(g);
     if (!window.confirm(t('confirmGroupDelete', { g: g, n: n }))) return;
 
-    accounts.forEach(function (a) { if (a.group === g) a.group = ''; });
+    accounts.forEach(function (a) { if (a.group === g) moveToGroup(a, ''); });
     activeGroup = null;
     persist();
     rebuildCards();
@@ -881,7 +929,7 @@
     editing.label = $('fLabel').value.trim();
     editing.password = $('fPassword').value;
     editing.secret = secret;
-    editing.group = $('fGroup').value.trim();
+    moveToGroup(editing, $('fGroup').value.trim());
     editing.note = $('fNote').value.trim();
     editing.digits = parseInt($('fDigits').value, 10) || 6;
     editing.period = parseInt($('fPeriod').value, 10) || 30;

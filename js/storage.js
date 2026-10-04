@@ -57,6 +57,32 @@
     return hex;
   }
 
+  var GROUP_COLORS = 8;
+
+  // Màu của một nhóm = màu của tài khoản ĐẦU TIÊN (theo thứ tự mảng) trong nhóm đó
+  // có đặt màu. -1 nếu chưa ai đặt.
+  function groupColorIndex(accounts, name) {
+    if (!name) return -1;
+    for (var i = 0; i < accounts.length; i++) {
+      var a = accounts[i];
+      if (a.group === name && a.groupColor >= 0) return a.groupColor;
+    }
+    return -1;
+  }
+
+  // Đưa mọi thành viên của mỗi nhóm về cùng một màu (theo quy tắc trên). Cần vì
+  // import / gộp nhóm có thể đưa vào các tài khoản mang màu khác nhau.
+  function normalizeGroupColors(accounts) {
+    var canon = Object.create(null);
+    accounts.forEach(function (a) {
+      if (a.group && !(a.group in canon) && a.groupColor >= 0) canon[a.group] = a.groupColor;
+    });
+    accounts.forEach(function (a) {
+      a.groupColor = a.group && (a.group in canon) ? canon[a.group] : -1;
+    });
+    return accounts;
+  }
+
   function sanitize(acc) {
     return {
       id: acc.id || newId(),
@@ -68,6 +94,10 @@
       issuer: String(acc.issuer || ''),
       note: String(acc.note || ''),
       group: String(acc.group || ''),   // rỗng = "Chưa phân nhóm"
+      // Màu nhóm người dùng chọn (0–7), -1 = tự động theo tên. Lưu trên từng tài
+      // khoản chứ không trong settings: như vậy nó được mã hoá cùng vault và đi
+      // theo file backup, tên nhóm không bao giờ nằm dạng văn bản thường.
+      groupColor: acc.group ? clampInt(acc.groupColor, 0, GROUP_COLORS - 1, -1) : -1,
       digits: clampInt(acc.digits, 6, 8, 6),
       period: clampInt(acc.period, 1, 300, 30),
       algorithm: normalizeAlgorithm(acc.algorithm),
@@ -122,6 +152,9 @@
     clear: clear,
     sanitize: sanitize,
     newId: newId,
-    assign: assign
+    assign: assign,
+    GROUP_COLORS: GROUP_COLORS,
+    groupColorIndex: groupColorIndex,
+    normalizeGroupColors: normalizeGroupColors
   };
 })(window);

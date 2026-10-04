@@ -251,6 +251,30 @@
     ok(typeof Vault.sanitize({}).id === 'string', 'có id');
   });
 
+  test('sanitize: groupColor chỉ 0–7, không nhóm thì -1', function () {
+    eq(Vault.sanitize({ group: 'A', groupColor: 3 }).groupColor, 3, 'hợp lệ');
+    eq(Vault.sanitize({ group: 'A', groupColor: '5' }).groupColor, 5, 'chuỗi số');
+    eq(Vault.sanitize({ group: 'A', groupColor: 9 }).groupColor, -1, 'quá lớn');
+    eq(Vault.sanitize({ group: 'A', groupColor: -3 }).groupColor, -1, 'âm');
+    eq(Vault.sanitize({ group: 'A' }).groupColor, -1, 'thiếu');
+    eq(Vault.sanitize({ group: '', groupColor: 2 }).groupColor, -1, 'không nhóm');
+  });
+
+  test('normalizeGroupColors: cả nhóm theo màu của thành viên đầu tiên có màu', function () {
+    var list = [
+      { group: 'A', groupColor: -1 },
+      { group: 'A', groupColor: 4 },
+      { group: 'A', groupColor: 6 },   // mâu thuẫn (vd. từ file import) -> theo 4
+      { group: 'B', groupColor: -1 },
+      { group: '', groupColor: 2 }     // không nhóm -> -1
+    ];
+    Vault.normalizeGroupColors(list);
+    eq(list.map(function (a) { return a.groupColor; }).join(','), '4,4,4,-1,-1');
+    eq(Vault.groupColorIndex(list, 'A'), 4, 'nhóm A');
+    eq(Vault.groupColorIndex(list, 'B'), -1, 'nhóm B tự động');
+    eq(Vault.groupColorIndex(list, ''), -1, 'không nhóm');
+  });
+
   /* ---------------- Mã hoá (AES-GCM + PBKDF2) ---------------- */
 
   // Test dùng 1.000 vòng cho nhanh; app thật dùng 600.000.
